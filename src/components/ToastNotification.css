@@ -1,0 +1,223 @@
+/* Sonner Custom Styles */
+.sonner-toast {
+  font-family: 'Inter', sans-serif !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+  border: none !important;
+  padding: 16px !important;
+  margin: 8px !important;
+  max-width: 380px !important;
+}
+
+.sonner-toast-success {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: white !important;
+}
+
+.sonner-toast-error {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: white !important;
+}
+
+.sonner-toast-warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: white !important;
+}
+
+.sonner-toast-info {
+  background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+  color: white !important;
+}
+
+.sonner-toast-loading {
+  background: linear-gradient(135deg, #64748b, #475569) !important;
+  color: white !important;
+}
+
+/* Custom toast content */
+.toast-confirm {
+  padding: 4px 0;
+}
+
+.toast-confirm-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.toast-confirm-message {
+  font-size: 13px;
+  opacity: 0.9;
+  line-height: 1.4;
+}
+
+/* Action buttons */
+[data-sonner-toast] [data-button] {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border: none !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s !important;
+}
+
+[data-sonner-toast] [data-button]:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-1px) !important;
+}
+
+[data-sonner-toast] [data-cancel] {
+  background: rgba(0, 0, 0, 0.1) !important;
+  color: white !important;
+}
+
+/* Close button */
+[data-sonner-toast] [data-close-button] {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  border: none !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Animation */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+[data-sonner-toast] {
+  animation: slideInRight 0.3s ease-out !important;
+}
+
+[data-sonner-toast][data-swiping="true"] {
+  animation: slideOutRight 0.3s ease-in forwards !important;
+}
+/* Help toast styles */
+.toast-help {
+  padding: 4px 0;
+}
+
+.toast-help-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: white;
+}
+
+.toast-help-content {
+  font-size: 12px;
+  opacity: 0.9;
+  line-height: 1.4;
+  color: white;
+}
+
+.toast-help-content p {
+  margin: 4px 0;
+}
+
+/* Connection test toast */
+.toast-connection {
+  padding: 4px 0;
+}
+
+.toast-connection-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: white;
+}
+
+.toast-connection-message {
+  font-size: 12px;
+  opacity: 0.9;
+  line-height: 1.4;
+  color: white;
+}
+
+/* Login error toast */
+.toast-login-error {
+  padding: 4px 0;
+}
+
+.toast-login-error-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: white;
+}
+
+.toast-login-error-content {
+  font-size: 12px;
+  opacity: 0.9;
+  line-height: 1.4;
+  color: white;
+}
+/* Ticket toast styles */
+.toast-confirm {
+  padding: 4px 0;
+}
+
+.toast-confirm-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: white;
+}
+
+.toast-confirm-message {
+  font-size: 12px;
+  opacity: 0.9;
+  line-height: 1.4;
+  color: white;
+}
+
+.toast-info {
+  padding: 4px 0;
+}
+
+.toast-info-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: white;
+}
+
+.toast-info-message {
+  font-size: 12px;
+  opacity: 0.9;
+  line-height: 1.4;
+  color: white;
+}
+
+/* Empty state styles */
+.text-center.py-5 {
+  padding: 3rem 0;
+}
+
+.text-center.py-5 .fa-3x {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}

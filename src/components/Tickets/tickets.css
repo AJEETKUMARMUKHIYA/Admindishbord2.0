@@ -1,0 +1,365 @@
+/* ==========================================================================
+   PackYatra — Tickets (corporate professional)
+   Scoped under #tickets. This overrides the look of the Bootstrap classes
+   used in Tickets.jsx (card, table, badge, btn, pagination) without
+   touching Bootstrap itself, so nothing outside #tickets is affected.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+#tickets {
+  --navy: #0f1729;
+  --muted: #667085;
+  --faint: #98a2b3;
+  --paper: #f6f7fb;
+  --surface: #ffffff;
+  --border: #e7e8f2;
+  --gold: #c9a227;
+
+  --blue: #2563eb;
+  --blue-bg: #eaf1ff;
+  --amber: #b45309;
+  --amber-bg: #fff6e6;
+  --green: #15803d;
+  --green-bg: #eafbf1;
+  --red: #b91c1c;
+  --red-bg: #fdecec;
+
+  font-family: 'Inter', sans-serif;
+  color: var(--navy);
+  background: var(--paper);
+  padding: 28px 32px 48px;
+  min-height: 100vh;
+}
+
+#tickets * {
+  box-sizing: border-box;
+}
+
+#tickets .page-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--navy);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Card shell                                                             */
+/* ---------------------------------------------------------------------- */
+
+#tickets .card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(16, 24, 40, 0.05);
+}
+
+#tickets .card-header {
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border);
+  padding: 6px 8px 0;
+}
+
+#tickets .card-body {
+  padding: 22px 22px 6px;
+}
+
+#tickets .card-footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 16px 22px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Table                                                                  */
+/* ---------------------------------------------------------------------- */
+
+#tickets .table {
+  margin-bottom: 0;
+  font-size: 13.5px;
+}
+
+#tickets .table thead.table-light th {
+  background: var(--paper) !important;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  padding: 12px 14px;
+  white-space: nowrap;
+}
+
+#tickets .table td {
+  padding: 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+  color: var(--navy);
+}
+
+#tickets .table tbody tr {
+  transition: background 0.12s ease;
+}
+
+#tickets .table-hover tbody tr:hover {
+  background: #fafbff;
+}
+
+#tickets .table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+#tickets .fw-semibold {
+  font-weight: 700;
+  color: var(--navy);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Status badges                                                          */
+/* ---------------------------------------------------------------------- */
+
+#tickets .badge {
+  font-weight: 700;
+  font-size: 11.5px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+
+#tickets .badge.bg-primary {
+  background: var(--blue-bg) !important;
+  color: var(--blue) !important;
+}
+
+#tickets .badge.bg-warning {
+  background: var(--amber-bg) !important;
+  color: var(--amber) !important;
+}
+
+#tickets .badge.bg-danger {
+  background: var(--red-bg) !important;
+  color: var(--red) !important;
+}
+
+#tickets .badge.bg-success {
+  background: var(--green-bg) !important;
+  color: var(--green) !important;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Form controls (assign dropdown)                                       */
+/* ---------------------------------------------------------------------- */
+
+#tickets .form-select {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  padding: 6px 30px 6px 10px;
+  background-color: var(--paper);
+  color: var(--navy);
+  min-width: 160px;
+}
+
+#tickets .form-select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.15);
+  outline: none;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Buttons                                                                */
+/* ---------------------------------------------------------------------- */
+
+#tickets .btn {
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+#tickets .btn-group.btn-group-sm {
+  display: inline-flex !important;
+  flex-wrap: nowrap !important;
+  gap: 4px;
+  vertical-align: middle;
+}
+
+#tickets .btn-group-sm .btn {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0 !important;
+}
+
+#tickets td.col-actions,
+#tickets td:last-child {
+  white-space: nowrap;
+}
+
+#tickets .form-select {
+  position: relative;
+  z-index: 1;
+}
+
+#tickets .btn-outline-secondary {
+  color: var(--muted);
+  border-color: var(--border);
+}
+
+#tickets .btn-outline-secondary:hover {
+  background: var(--paper);
+  color: var(--navy);
+  border-color: var(--faint);
+}
+
+#tickets .btn-outline-primary {
+  color: var(--blue);
+  border-color: var(--blue-bg);
+}
+
+#tickets .btn-outline-primary:hover {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+
+#tickets .btn-outline-success {
+  color: var(--green);
+  border-color: var(--green-bg);
+}
+
+#tickets .btn-outline-success:hover {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+#tickets .btn-outline-danger {
+  color: var(--red);
+  border-color: var(--red-bg);
+}
+
+#tickets .btn-outline-danger:hover {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
+#tickets .card-footer .btn-outline-primary {
+  width: auto;
+  height: auto;
+  padding: 9px 20px;
+  border-radius: 999px;
+}
+
+#tickets .card-footer .btn-success {
+  width: auto;
+  height: auto;
+  padding: 9px 20px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--gold), #a9821c);
+  border: none;
+  color: #1a1300;
+  box-shadow: 0 4px 12px rgba(201, 162, 39, 0.3);
+}
+
+#tickets .card-footer .btn-success:hover {
+  filter: brightness(1.05);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Pagination                                                             */
+/* ---------------------------------------------------------------------- */
+
+#tickets nav {
+  display: block;
+  width: 100%;
+}
+
+#tickets .pagination {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  list-style: none !important;
+  margin: 18px 0 4px;
+  padding: 0 !important;
+  gap: 6px;
+}
+
+#tickets .page-item {
+  list-style: none;
+  margin: 0;
+}
+
+#tickets .page-item .page-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 10px;
+  background: var(--surface);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+#tickets .page-item .page-link:hover {
+  background: var(--paper);
+  border-color: var(--faint);
+}
+
+#tickets .page-item.active .page-link {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+
+#tickets .page-item.disabled .page-link {
+  color: var(--faint);
+  background: var(--paper);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* First/Prev/Next/Last text buttons get a bit more breathing room than the numbered pills */
+#tickets .page-item:first-child .page-link,
+#tickets .page-item:last-child .page-link {
+  padding: 0 16px;
+  font-weight: 700;
+}
+
+@media (max-width: 576px) {
+  #tickets .pagination {
+    justify-content: center;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Responsive                                                             */
+/* ---------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  #tickets {
+    padding: 20px 16px 40px;
+  }
+
+  #tickets .card-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #tickets .card-footer .btn {
+    width: 100%;
+  }
+}
