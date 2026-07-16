@@ -7,6 +7,7 @@ import axiosClient from './AxiosClient';
 import config from './config';
 import './styles/global.css';
 import { Toaster } from 'sonner';
+import { Menu } from 'lucide-react';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -28,6 +29,12 @@ function App() {
     totalSupervisors: 0
   });
   const [loading, setLoading] = useState(false);
+
+  // Initialize theme on app mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('app-theme') || 'vibrant-ocean';
+    document.body.setAttribute('data-theme', savedTheme);
+  }, []);
 
   // Responsive sidebar
   useEffect(() => {
@@ -164,7 +171,7 @@ function App() {
 
       <div id="adminPanel">
         <button className="mobile-toggle" onClick={toggleSidebar}>
-          <i className="fa fa-bars"></i>
+          <Menu size={20} />
         </button>
 
         <Sidebar

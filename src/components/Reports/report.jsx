@@ -1,178 +1,127 @@
 import { useState } from 'react'
 import Quotation from './Quotation'
 import Invoice from './Invoice'
+import { FileText, Receipt } from 'lucide-react'
 
-export default function report() {
+export default function Reports() {
   const [activeTab, setActiveTab] = useState('quotation')
 
   return (
-    <div className="container">
+    <div className="reports-container" id="reportsPage">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
-
-        .container * {
-          box-sizing: border-box;
-        }
-
-        .container {
-          max-width: 1100px;
-          margin: 0 auto;
-          padding: 40px 24px 64px;
+        #reportsPage {
           font-family: 'Inter', sans-serif;
-          color: #1a2238;
-          background: #f3f5f8;
+          color: #0f172a;
+          min-height: 100%;
         }
 
-        /* Header */
-        .container .header {
-          display: flex;
-          align-items: center;
-          gap: 16px;
+        /* Elegant Formal Header */
+        #reportsPage .reports-header {
           margin-bottom: 28px;
+          border-bottom: 1px solid #e2e8f0;
+          padding-bottom: 20px;
         }
 
-        .container .header-icon {
-          width: 48px;
-          height: 48px;
-          flex-shrink: 0;
-          border-radius: 12px;
-          background: linear-gradient(135deg, #1a2238, #2c3a5e);
-          color: #fff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 18px;
-          box-shadow: 0 4px 12px rgba(26, 34, 56, 0.25);
+        #reportsPage .reports-meta {
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 1.5px;
+          color: #2563eb;
+          text-transform: uppercase;
+          margin-bottom: 6px;
         }
 
-        .container .header-text h1 {
+        #reportsPage .reports-title {
           font-family: 'Space Grotesk', sans-serif;
-          font-size: 26px;
+          font-size: 28px;
           font-weight: 700;
-          margin: 0;
-          letter-spacing: -0.01em;
+          color: #0f172a;
+          margin: 0 0 4px;
+          letter-spacing: -0.5px;
         }
 
-        .container .header-subtitle {
-          margin: 4px 0 0;
+        #reportsPage .reports-subtitle {
           font-size: 14px;
-          color: #6b7280;
+          color: #64748b;
+          margin: 0;
         }
 
-        /* Tabs container */
-        .container .tabs-container {
-          background: #ffffff;
-          border: 1px solid #e3e6ee;
-          border-top: 3px solid #e3e6ee;
-          border-radius: 14px;
-          overflow: hidden;
-          box-shadow: 0 1px 3px rgba(20, 24, 40, 0.04);
-          transition: border-top-color 0.25s ease;
-        }
-
-        .container .tabs-container.accent-quotation {
-          border-top-color: #2f7d6b;
-        }
-
-        .container .tabs-container.accent-invoice {
-          border-top-color: #b8862b;
-        }
-
-        /* Tabs header */
-        .container .tabs-header {
+        /* Segmented Controller (Extremely Formal Tabs) */
+        #reportsPage .tabs-wrapper {
           display: flex;
-          background: #f3f5f8;
-          border-bottom: 1px solid #e3e6ee;
-          padding: 6px;
-          gap: 6px;
+          background: #f1f5f9;
+          padding: 4px;
+          border-radius: 10px;
+          border: 1px solid #e2e8f0;
+          margin-bottom: 24px;
+          max-width: 480px;
         }
 
-        .container .tab-btn {
+        #reportsPage .tab-trigger {
           flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
-          padding: 12px 16px;
-          font-family: 'Inter', sans-serif;
-          font-size: 14px;
+          padding: 10px 16px;
+          font-size: 13.5px;
           font-weight: 600;
-          color: #6b7280;
+          color: #64748b;
           background: transparent;
           border: none;
-          border-radius: 9px;
+          border-radius: 7px;
           cursor: pointer;
-          transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+          transition: all 0.2s ease;
         }
 
-        .container .tab-btn i {
-          font-size: 13px;
+        #reportsPage .tab-trigger:hover {
+          color: #0f172a;
         }
 
-        .container .tab-btn:hover {
-          background: rgba(26, 34, 56, 0.05);
-          color: #1a2238;
+        #reportsPage .tab-trigger.active {
+          background: #ffffff;
+          color: #2563eb;
+          box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
         }
 
-        .container .tab-btn.quotation-tab.active {
-          background: #eaf5f1;
-          color: #2f7d6b;
-          box-shadow: inset 0 0 0 1px rgba(47, 125, 107, 0.25);
+        #reportsPage .tab-panel {
+          animation: reportsFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .container .tab-btn.invoice-tab.active {
-          background: #faf2e2;
-          color: #b8862b;
-          box-shadow: inset 0 0 0 1px rgba(184, 134, 43, 0.25);
-        }
-
-        /* Content */
-        .container .tab-content {
-          padding: 28px;
-        }
-
-        @media (max-width: 640px) {
-          .container .tabs-header {
-            flex-direction: column;
-          }
-
-          .container .header {
-            align-items: flex-start;
-          }
+        @keyframes reportsFadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
 
-      <div className="header">
-        <div className="header-icon">
-          <i className="fas fa-chart-line"></i>
-        </div>
-        <div className="header-text">
-          <h1>Reports & Analytics</h1>
-          <p className="header-subtitle">Track quotations and invoices in one place</p>
-        </div>
+      <div className="reports-header">
+        <div className="reports-meta">OPERATIONS & INTEL</div>
+        <h1 className="reports-title">Reports & Analytics</h1>
+        <p className="reports-subtitle">Track, generate, and edit digital quotation sheets and commercial invoice logs.</p>
       </div>
 
-      <div className={`tabs-container accent-${activeTab}`}>
-        <div className="tabs-header">
-          <button
-            className={`tab-btn quotation-tab ${activeTab === 'quotation' ? 'active' : ''}`}
-            onClick={() => setActiveTab('quotation')}
-          >
-            <i className="fas fa-file-contract"></i> Quotation Management
-          </button>
+      <div className="tabs-wrapper">
+        <button
+          className={`tab-trigger ${activeTab === 'quotation' ? 'active' : ''}`}
+          onClick={() => setActiveTab('quotation')}
+        >
+          <FileText size={16} />
+          <span>Quotations</span>
+        </button>
 
-          <button
-            className={`tab-btn invoice-tab ${activeTab === 'invoice' ? 'active' : ''}`}
-            onClick={() => setActiveTab('invoice')}
-          >
-            <i className="fas fa-file-invoice-dollar"></i> Invoice Management
-          </button>
-        </div>
+        <button
+          className={`tab-trigger ${activeTab === 'invoice' ? 'active' : ''}`}
+          onClick={() => setActiveTab('invoice')}
+        >
+          <Receipt size={16} />
+          <span>Invoices</span>
+        </button>
+      </div>
 
-        <div className="tab-content">
-          {activeTab === 'quotation' && <Quotation />}
-          {activeTab === 'invoice' && <Invoice />}
-        </div>
+      <div className="tab-panel">
+        {activeTab === 'quotation' && <Quotation />}
+        {activeTab === 'invoice' && <Invoice />}
       </div>
     </div>
   )

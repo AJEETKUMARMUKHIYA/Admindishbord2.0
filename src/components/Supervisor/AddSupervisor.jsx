@@ -1,88 +1,117 @@
-const AddSupervisor = ({ supervisor, onInputChange, onAddSupervisor }) => {
-  return (
-    <div className="card shadow-sm border-0 mb-4">
-      <div className="card-header bg-gradient-primary text-white d-flex align-items-center">
-        <i className="fas fa-user-plus me-3 fs-4"></i>
-        <h5 className="mb-0">Add New Supervisor</h5>
-      </div>
+import React from 'react';
+import { User, Phone, Mail, Lock, Check } from 'lucide-react';
 
-      <div className="card-body p-4">
-        <div className="row g-4">
-          <div className="col-md-6">
-            <label htmlFor="firstName" className="form-label">First Name *</label>
+const AddSupervisor = ({ supervisor, onInputChange, onAddSupervisor, isEdit }) => {
+  const isFormValid = 
+    supervisor.firstName?.trim() &&
+    supervisor.lastName?.trim() &&
+    supervisor.mobile?.trim() &&
+    supervisor.email?.trim() &&
+    (isEdit || supervisor.password?.trim());
+
+  return (
+    <div style={{ width: '100%' }}>
+      <div className="sp-form-grid">
+        {/* First Name */}
+        <div className="sp-input-group">
+          <label htmlFor="firstName">First Name</label>
+          <div className="sp-input-wrapper">
+            <User size={16} className="sp-input-icon" />
             <input
+              required
+              type="text"
               id="firstName"
-              className="form-control form-control-lg"
               placeholder="Enter first name"
               value={supervisor.firstName || ''}
               onChange={onInputChange}
+              className="sp-input"
             />
           </div>
+        </div>
 
-          <div className="col-md-6">
-            <label htmlFor="lastName" className="form-label">Last Name *</label>
+        {/* Last Name */}
+        <div className="sp-input-group">
+          <label htmlFor="lastName">Last Name</label>
+          <div className="sp-input-wrapper">
+            <User size={16} className="sp-input-icon" />
             <input
+              required
+              type="text"
               id="lastName"
-              className="form-control form-control-lg"
               placeholder="Enter last name"
               value={supervisor.lastName || ''}
               onChange={onInputChange}
+              className="sp-input"
             />
           </div>
+        </div>
 
-          <div className="col-md-6">
-            <label htmlFor="mobile" className="form-label">Mobile Number *</label>
+        {/* Mobile Number */}
+        <div className="sp-input-group">
+          <label htmlFor="mobile">Mobile Number</label>
+          <div className="sp-input-wrapper">
+            <Phone size={16} className="sp-input-icon" />
             <input
-              id="mobile"
+              required
               type="tel"
-              className="form-control form-control-lg"
-              placeholder="10-digit mobile number"
+              id="mobile"
+              placeholder="10-digit number"
               value={supervisor.mobile || ''}
               onChange={onInputChange}
+              className="sp-input"
             />
           </div>
+        </div>
 
-          <div className="col-md-6">
-            <label htmlFor="email" className="form-label">Email Address *</label>
+        {/* Email Address */}
+        <div className="sp-input-group">
+          <label htmlFor="email">Email Address</label>
+          <div className="sp-input-wrapper">
+            <Mail size={16} className="sp-input-icon" />
             <input
-              id="email"
+              required
               type="email"
-              className="form-control form-control-lg"
+              id="email"
               placeholder="name@example.com"
               value={supervisor.email || ''}
               onChange={onInputChange}
+              className="sp-input"
             />
-          </div>
-
-          <div className="col-md-12">
-            <label htmlFor="password" className="form-label">Password *</label>
-            <input
-              id="password"
-              type="password"
-              className="form-control form-control-lg"
-              placeholder="Create strong password"
-              value={supervisor.password || ''}
-              onChange={onInputChange}
-            />
-          </div>
-
-          <div className="col-12 mt-3">
-            <button
-              className="btn btn-primary btn-lg w-100"
-              onClick={onAddSupervisor}
-              disabled={
-                !supervisor.firstName?.trim() ||
-                !supervisor.lastName?.trim() ||
-                !supervisor.mobile?.trim() ||
-                !supervisor.email?.trim() ||
-                !supervisor.password?.trim()
-              }
-            >
-              <i className="fas fa-user-plus me-2"></i>
-              Create Supervisor
-            </button>
           </div>
         </div>
+
+        {/* Password (only if not editing) */}
+        {!isEdit && (
+          <div className="sp-input-group sp-form-span-2">
+            <label htmlFor="password">Password</label>
+            <div className="sp-input-wrapper">
+              <Lock size={16} className="sp-input-icon" />
+              <input
+                required
+                type="password"
+                id="password"
+                placeholder="Create strong password"
+                value={supervisor.password || ''}
+                onChange={onInputChange}
+                className="sp-input"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Action Submit Button */}
+      <div style={{ marginTop: '24px' }}>
+        <button
+          type="button"
+          onClick={onAddSupervisor}
+          disabled={!isFormValid}
+          className="sp-btn sp-btn--solid"
+          style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
+        >
+          <Check size={16} />
+          <span>{isEdit ? 'Save Changes' : 'Register Supervisor'}</span>
+        </button>
       </div>
     </div>
   );

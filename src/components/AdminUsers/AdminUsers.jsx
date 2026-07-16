@@ -190,19 +190,19 @@ const AdminUsers = ({ adminUsers, onRefresh, onAddAdmin, onEditAdmin, onDeleteAd
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');
         :root {
-          --ink: #12151C;
-          --paper: #F5F6F4;
-          --line: #E3E5E1;
-          --accent: #2952E3;
-          --accent-bright: #4C6FF0;
-          --accent-soft: #EAEFFD;
-          --amber: #C67C1F;
-          --amber-soft: #FAF0E1;
-          --success: #1E8E5A;
-          --success-soft: #E8F5EE;
-          --danger: #C6403E;
-          --danger-soft: #FBEAEA;
-          --muted: #6B7280;
+          --ink: #0f172a;
+          --paper: #f8fafc;
+          --line: #cbd5e1;
+          --accent: #2563eb;
+          --accent-bright: #06b6d4;
+          --accent-soft: #eff6ff;
+          --amber: #f59e0b;
+          --amber-soft: #fefbeb;
+          --success: #10b981;
+          --success-soft: #ecfdf5;
+          --danger: #ef4444;
+          --danger-soft: #fef2f2;
+          --muted: #64748b;
         }
         .au-btn { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13.5px; border-radius: 9px; padding: 9px 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; border: 1px solid transparent; transition: all 0.15s ease; }
         .au-btn-ghost { background: #fff; border-color: var(--line); color: var(--ink); }

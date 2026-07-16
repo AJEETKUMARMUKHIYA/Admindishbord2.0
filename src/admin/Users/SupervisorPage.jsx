@@ -36,6 +36,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { styled } from '@mui/material/styles';
 
+const apiHost = (import.meta.env.VITE_API_BASE_URL || 'https://packyatra.in/api').replace(/\/api$/, '');
+
 // Custom styled components
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
@@ -561,9 +563,9 @@ const uploadAttachment = async (ticketId, category, file) => {
                           {ticket.groupPicturePath && (
                             <Box sx={{ width: 120 }}>
                               <ImagePreview
-                                src={`https://localhost:7148${ticket.groupPicturePath}`}
+                                src={`${apiHost}${ticket.groupPicturePath}`}
                                 alt="Group"
-                                onClick={() => window.open(`https://localhost:7148${ticket.groupPicturePath}`, '_blank')}
+                                onClick={() => window.open(`${apiHost}${ticket.groupPicturePath}`, '_blank')}
                               />
                               <Typography variant="caption" color="text.secondary">
                                 Group
@@ -573,9 +575,9 @@ const uploadAttachment = async (ticketId, category, file) => {
                           {ticket.additionalGroupPicturePath && (
                             <Box sx={{ width: 120 }}>
                               <ImagePreview
-                                src={`https://localhost:7148${ticket.additionalGroupPicturePath}`}
+                                src={`${apiHost}${ticket.additionalGroupPicturePath}`}
                                 alt="Additional Group"
-                                onClick={() => window.open(`https://localhost:7148${ticket.additionalGroupPicturePath}`, '_blank')}
+                                onClick={() => window.open(`${apiHost}${ticket.additionalGroupPicturePath}`, '_blank')}
                               />
                               <Typography variant="caption" color="text.secondary">
                                 Additional Group
@@ -585,9 +587,9 @@ const uploadAttachment = async (ticketId, category, file) => {
                           {ticket.deliveryPicturePath && (
                             <Box sx={{ width: 120 }}>
                               <ImagePreview
-                                src={`https://localhost:7148${ticket.deliveryPicturePath}`}
+                                src={`${apiHost}${ticket.deliveryPicturePath}`}
                                 alt="Delivery"
-                                onClick={() => window.open(`https://localhost:7148${ticket.deliveryPicturePath}`, '_blank')}
+                                onClick={() => window.open(`${apiHost}${ticket.deliveryPicturePath}`, '_blank')}
                               />
                               <Typography variant="caption" color="text.secondary">
                                 Delivery

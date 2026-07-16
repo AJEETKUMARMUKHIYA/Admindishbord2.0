@@ -1,8 +1,30 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import TicketTabs from './TicketTabs';
 import * as XLSX from 'xlsx';
 import { showToast } from '../../utils/toast';
-import  './tickets.css'
+import './tickets.css';
+import { 
+  Search, 
+  X, 
+  Eye, 
+  Check, 
+  Play, 
+  RefreshCw, 
+  Download, 
+  ShieldAlert, 
+  TrendingUp, 
+  Clock, 
+  CheckCircle, 
+  XCircle, 
+  ChevronLeft, 
+  ChevronRight, 
+  MapPin, 
+  User, 
+  ArrowRight,
+  Inbox,
+  AlertCircle
+} from 'lucide-react';
+
 const ROWS_PER_PAGE = 12;
 
 const Tickets = ({ tickets, supervisors, onAssignTicket, onUpdateTicket, onRefresh }) => {
@@ -22,17 +44,12 @@ const Tickets = ({ tickets, supervisors, onAssignTicket, onUpdateTicket, onRefre
   // Ticket currently open in the View modal (null = closed)
   const [viewTicket, setViewTicket] = useState(null);
 
-  // ================= COMMON =================
-
-  const paginate = (data, tab) => {
-    const start = (currentPage[tab] - 1) * ROWS_PER_PAGE;
-    return data.slice(start, start + ROWS_PER_PAGE);
-  };
+  // ================= DATA FILTERING =================
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
-    // Jump every tab back to page 1 so filtered results are visible
+    // Reset all tabs back to page 1 for filtered viewing
     setCurrentPage({ new: 1, progress: 1, cancel: 1, closed: 1 });
   };
 
@@ -41,105 +58,6 @@ const Tickets = ({ tickets, supervisors, onAssignTicket, onUpdateTicket, onRefre
     if (!query) return true;
     return String(t.bookingID ?? '').toLowerCase().includes(query);
   };
-
-  const Pagination = ({ total, tab }) => {
-    const pages = Math.ceil(total / ROWS_PER_PAGE);
-    if (pages <= 1) return null;
-
-    return (
-      <nav className="mt-3">
-        <ul className="pagination justify-content-end">
-          <li className={`page-item ${currentPage[tab] === 1 ? 'disabled' : ''}`}>
-            <button
-              className="page-link"
-              onClick={() =>
-                setCurrentPage({ ...currentPage, [tab]: currentPage[tab] - 1 })
-              }
-            >
-              Prev
-            </button>
-          </li>
-
-          {[...Array(pages)].map((_, i) => (
-            <li
-              key={i}
-              className={`page-item ${currentPage[tab] === i + 1 ? 'active' : ''}`}
-            >
-              <button
-                className="page-link"
-                onClick={() =>
-                  setCurrentPage({ ...currentPage, [tab]: i + 1 })
-                }
-              >
-                {i + 1}
-              </button>
-            </li>
-          ))}
-
-          <li
-            className={`page-item ${
-              currentPage[tab] === pages ? 'disabled' : ''
-            }`}
-          >
-            <button
-              className="page-link"
-              onClick={() =>
-                setCurrentPage({ ...currentPage, [tab]: currentPage[tab] + 1 })
-              }
-            >
-              Next
-            </button>
-          </li>
-        </ul>
-      </nav>
-    );
-  };
-
-  // ================= ACTIONS =================
-
-  const handleStatusChange = (id, status) => {
-    if (window.confirm(`Change ticket status to ${status}?`)) {
-      onUpdateTicket(id, { status });
-      showToast(`Ticket marked as ${status}`, 'success');
-    }
-  };
-
-  const handleAssign = (ticketId, supervisorId) => {
-    const sup = supervisors.find(s => s.userId === supervisorId);
-    if (!sup) return;
-
-    onAssignTicket(ticketId, supervisorId);
-    setSelectedSupervisor(prev => ({ ...prev, [ticketId]: supervisorId }));
-    showToast(`Assigned to ${sup.firstName} ${sup.lastName}`, 'success');
-  };
-
-  const handleDownloadExcel = () => {
-    const data = tickets.map(t => ({
-      TicketID: t.ticketNo,
-      BookingID: t.bookingID,
-      From: t.fromLocation,
-      To: t.toLocation,
-      Status: t.status,
-      Assigned:
-        supervisors.find(s => s.userId === t.assignedSupervisorID)?.firstName ||
-        'Unassigned'
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Tickets');
-    XLSX.writeFile(wb, 'Tickets_Report.xlsx');
-
-    showToast('Excel downloaded successfully', 'success');
-  };
-
-  const handleView = (ticket) => {
-    setViewTicket(ticket);
-  };
-
-  const closeViewModal = () => setViewTicket(null);
-
-  // ================= DATA =================
 
   const newTickets = useMemo(
     () => tickets.filter(t => t.status === 'Open').filter(matchesSearch),
@@ -158,447 +76,596 @@ const Tickets = ({ tickets, supervisors, onAssignTicket, onUpdateTicket, onRefre
     [tickets, searchQuery]
   );
 
+  // Compute operational overview stats dynamically
+  const metrics = useMemo(() => {
+    const total = tickets.length;
+    const openCount = tickets.filter(t => t.status === 'Open').length;
+    const progressCount = tickets.filter(t => t.status === 'In Progress').length;
+    const closedCount = tickets.filter(t => t.status === 'Closed').length;
+    const successRate = total > 0 ? Math.round((closedCount / total) * 100) : 0;
+
+    return {
+      total,
+      openCount,
+      progressCount,
+      successRate
+    };
+  }, [tickets]);
+
+  // ================= PAGINATION =================
+
+  const paginate = (data, tab) => {
+    const start = (currentPage[tab] - 1) * ROWS_PER_PAGE;
+    return data.slice(start, start + ROWS_PER_PAGE);
+  };
+
+  const Pagination = ({ total, tab }) => {
+    const pages = Math.ceil(total / ROWS_PER_PAGE);
+    if (pages <= 1) return null;
+
+    const current = currentPage[tab];
+
+    return (
+      <div className="tickets-pagination-bar">
+        <ul className="tickets-pager">
+          <li>
+            <button
+              type="button"
+              className={`tickets-pager-btn ${current === 1 ? 'disabled' : ''}`}
+              disabled={current === 1}
+              onClick={() => setCurrentPage({ ...currentPage, [tab]: current - 1 })}
+            >
+              <ChevronLeft size={14} style={{ marginRight: 4 }} /> Prev
+            </button>
+          </li>
+
+          {[...Array(pages)].map((_, i) => (
+            <li key={i}>
+              <button
+                type="button"
+                className={`tickets-pager-btn ${current === i + 1 ? 'active' : ''}`}
+                onClick={() => setCurrentPage({ ...currentPage, [tab]: i + 1 })}
+              >
+                {i + 1}
+              </button>
+            </li>
+          ))}
+
+          <li>
+            <button
+              type="button"
+              className={`tickets-pager-btn ${current === pages ? 'disabled' : ''}`}
+              disabled={current === pages}
+              onClick={() => setCurrentPage({ ...currentPage, [tab]: current + 1 })}
+            >
+              Next <ChevronRight size={14} style={{ marginLeft: 4 }} />
+            </button>
+          </li>
+        </ul>
+      </div>
+    );
+  };
+
+  // ================= ACTIONS =================
+
+  const handleStatusChange = (id, status) => {
+    if (window.confirm(`Are you sure you want to change the ticket status to: ${status}?`)) {
+      onUpdateTicket(id, { status });
+      showToast(`Ticket successfully marked as ${status}`, 'success');
+    }
+  };
+
+  const handleAssign = (ticketId, supervisorId) => {
+    const sup = supervisors.find(s => s.userId === supervisorId);
+    if (!sup) return;
+
+    onAssignTicket(ticketId, supervisorId);
+    setSelectedSupervisor(prev => ({ ...prev, [ticketId]: supervisorId }));
+    showToast(`Successfully assigned to ${sup.firstName} ${sup.lastName}`, 'success');
+  };
+
+  const handleDownloadExcel = () => {
+    const data = tickets.map(t => ({
+      'Ticket ID': t.ticketNo,
+      'Booking ID': t.bookingID,
+      'Origin (From)': t.fromLocation,
+      'Destination (To)': t.toLocation,
+      'Current Status': t.status,
+      'Assigned Supervisor':
+        supervisors.find(s => s.userId === t.assignedSupervisorID)?.firstName || 'Unassigned'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Operational Tickets');
+    XLSX.writeFile(wb, 'Corporate_Tickets_Report.xlsx');
+
+    showToast('Operational Report downloaded successfully', 'success');
+  };
+
+  const handleView = (ticket) => {
+    setViewTicket(ticket);
+  };
+
+  const closeViewModal = () => setViewTicket(null);
+
   const viewTicketSupervisor = viewTicket
     ? supervisors.find(s => s.userId === viewTicket.assignedSupervisorID)
     : null;
 
-  // ================= UI =================
-
   return (
-    <div id="tickets" className="page">
-      <h2 className="page-title mb-3">Ticket Management</h2>
+    <div id="tickets">
+      
+      {/* Header Eyebrow and Titles */}
+      <div className="tickets-header">
+        <div className="tickets-eyebrow">
+          <ShieldAlert size={12} /> System Logistics & Field Operations Hub
+        </div>
+        <h1 className="tickets-title">Ticket Management</h1>
+        <p className="tickets-subtitle">
+          Monitor dispatch assignments, track live supervisor activity logs, and resolve transport operational tickets.
+        </p>
+      </div>
 
-      <div className="card shadow-sm">
-        <div className="card-header bg-white">
-          <TicketTabs
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            tickets={tickets}
-          />
+      {/* Operational Metrics Grid */}
+      <div className="tickets-metrics-grid">
+        <div className="tickets-metric-card">
+          <div className="tickets-metric-icon-wrapper" style={{ backgroundColor: '#eff6ff', color: '#2563eb' }}>
+            <Inbox size={20} />
+          </div>
+          <div className="tickets-metric-info">
+            <span className="tickets-metric-label">Operational Load</span>
+            <span className="tickets-metric-val">{metrics.total}</span>
+          </div>
         </div>
 
-        <div className="card-body">
+        <div className="tickets-metric-card">
+          <div className="tickets-metric-icon-wrapper" style={{ backgroundColor: '#fefbeb', color: '#d97706' }}>
+            <AlertCircle size={20} />
+          </div>
+          <div className="tickets-metric-info">
+            <span className="tickets-metric-label">Unresolved (New)</span>
+            <span className="tickets-metric-val">{metrics.openCount}</span>
+          </div>
+        </div>
 
-          {/* ================= SEARCH ================= */}
-          <div className="row mb-3">
-            <div className="col-md-4">
-              <div className="input-group">
-                <span className="input-group-text bg-white">
-                  <i className="fas fa-search"></i>
-                </span>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Search by Booking ID"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                />
-                {searchQuery && (
-                  <button
-                    className="btn btn-outline-secondary"
-                    type="button"
-                    title="Clear search"
-                    onClick={() => handleSearchChange({ target: { value: '' } })}
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
-                )}
-              </div>
-            </div>
+        <div className="tickets-metric-card">
+          <div className="tickets-metric-icon-wrapper" style={{ backgroundColor: '#ecfeff', color: '#0891b2' }}>
+            <Clock size={20} />
+          </div>
+          <div className="tickets-metric-info">
+            <span className="tickets-metric-label">In Progress</span>
+            <span className="tickets-metric-val">{metrics.progressCount}</span>
+          </div>
+        </div>
+
+        <div className="tickets-metric-card">
+          <div className="tickets-metric-icon-wrapper" style={{ backgroundColor: '#ecfdf5', color: '#10b981' }}>
+            <TrendingUp size={20} />
+          </div>
+          <div className="tickets-metric-info">
+            <span className="tickets-metric-label">Completion Efficiency</span>
+            <span className="tickets-metric-val">{metrics.successRate}%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Outer Card Frame */}
+      <div className="tickets-card-frame">
+        
+        {/* Navigation Tabs Header */}
+        <TicketTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          tickets={tickets}
+        />
+
+        {/* Search and Quick Filters Strip */}
+        <div className="tickets-control-strip">
+          <div className="tickets-search-box">
+            <Search size={16} className="tickets-search-icon" />
+            <input
+              type="text"
+              className="tickets-search-input"
+              placeholder="Filter by Booking ID..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+            {searchQuery && (
+              <button className="tickets-search-clear" onClick={() => handleSearchChange({ target: { value: '' } })}>
+                <X size={15} />
+              </button>
+            )}
           </div>
 
-          {/* ================= OPEN ================= */}
+          <div className="tickets-actions-group">
+            <button className="btn-formal btn-formal-outline" onClick={onRefresh}>
+              <RefreshCw size={14} />
+              Re-sync
+            </button>
+            <button className="btn-formal btn-formal-gradient" onClick={handleDownloadExcel}>
+              <Download size={14} />
+              Export Report
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Contents */}
+        <div className="tickets-table-container">
+          
+          {/* ================= OPEN TICKETS ================= */}
           {activeTab === 'new' && (
             <>
-              <div className="table-responsive">
-                <table className="table table-hover align-middle">
-                  <thead className="table-light">
+              <table className="tickets-table">
+                <thead>
+                  <tr>
+                    <th>Ticket Ref</th>
+                    <th>Booking ID</th>
+                    <th>Logistical Route</th>
+                    <th>Current Status</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {newTickets.length === 0 ? (
                     <tr>
-                      <th>Ticket</th>
-                      <th>Booking</th>
-                      <th>Route</th>
-                      <th>Status</th>
-                      {/* <th>Assign</th> */}
-                      <th className="text-end">Action</th>
+                      <td colSpan="5" style={{ textAlign: 'center', color: '#64748b', padding: '48px 24px' }}>
+                        {searchQuery
+                          ? `No open tickets found matching Booking ID "${searchQuery}".`
+                          : 'Operational database is currently clear of open tickets.'}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {newTickets.length === 0 ? (
-                      <tr>
-                        <td colSpan="5" className="text-center text-muted py-4">
-                          {searchQuery
-                            ? `No open tickets found for Booking ID "${searchQuery}".`
-                            : 'No open tickets.'}
+                  ) : (
+                    paginate(newTickets, 'new').map(t => (
+                      <tr key={t.ticketID}>
+                        <td><span className="ticket-code">{t.ticketNo}</span></td>
+                        <td><span className="booking-code">#{t.bookingID}</span></td>
+                        <td>
+                          <div className="route-text">
+                            <MapPin size={13} style={{ color: '#94a3b8' }} />
+                            <span>{t.fromLocation}</span>
+                            <ArrowRight size={12} className="route-arrow" />
+                            <span>{t.toLocation}</span>
+                          </div>
+                        </td>
+                        <td><span className="tickets-badge badge-open">Open</span></td>
+                        <td>
+                          <div className="action-buttons-wrap">
+                            <button
+                              type="button"
+                              className="btn-action-round"
+                              title="Inspect Details"
+                              onClick={() => handleView(t)}
+                            >
+                              <Eye size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
-                    ) : (
-                      paginate(newTickets, 'new').map(t => (
-                        <tr key={t.ticketID}>
-                          <td className="fw-semibold">{t.ticketNo}</td>
-                          <td>{t.bookingID}</td>
-                          <td>{t.fromLocation} → {t.toLocation}</td>
-                          <td><span className="badge bg-primary">Open</span></td>
-                          {/* <td>
-                            <select
-                              className="form-select form-select-sm"
-                              value={selectedSupervisor[t.ticketID] || ''}
-                              onChange={e =>
-                                handleAssign(t.ticketID, Number(e.target.value))
-                              }
-                            >
-                              <option value="">Unassigned</option>
-                              {supervisors.filter(s => s.active).map(s => (
-                                <option key={s.userId} value={s.userId}>
-                                  {s.firstName} {s.lastName}
-                                </option>
-                              ))}
-                            </select>
-                          </td> */}
-                          <td className="text-end">
-                            <div className="btn-group btn-group-sm">
-                              <button
-                                className="btn btn-outline-secondary"
-                                title="View"
-                                onClick={() => handleView(t)}
-                              >
-                                <i className="fas fa-eye"></i>
-                              </button>
-
-                              {/* <button
-                                className="btn btn-outline-primary"
-                                title="Start"
-                                onClick={() =>
-                                  handleStatusChange(t.ticketID, 'In Progress')
-                                }
-                              >
-                                <i className="fas fa-play"></i>
-                              </button> */}
-
-                              {/* <button
-                                className="btn btn-outline-danger"
-                                title="Cancel"
-                                onClick={() =>
-                                  handleStatusChange(t.ticketID, 'Cancelled')
-                                }
-                              >
-                                <i className="fas fa-times"></i>
-                              </button> */}
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    ))
+                  )}
+                </tbody>
+              </table>
               <Pagination total={newTickets.length} tab="new" />
             </>
           )}
 
-          {/* ================= PROGRESS ================= */}
+          {/* ================= IN PROGRESS TICKETS ================= */}
           {activeTab === 'progress' && (
             <>
-              <div className="table-responsive">
-                <table className="table table-hover align-middle">
-                  <thead className="table-light">
+              <table className="tickets-table">
+                <thead>
+                  <tr>
+                    <th>Ticket Ref</th>
+                    <th>Booking ID</th>
+                    <th>Logistical Route</th>
+                    <th>Current Status</th>
+                    <th>Supervisor assigned</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {progressTickets.length === 0 ? (
                     <tr>
-                      <th>Ticket</th>
-                      <th>Booking</th>
-                      <th>Route</th>
-                      <th>Status</th>
-                      <th>Assigned</th>
-                      <th className="text-end">Action</th>
+                      <td colSpan="6" style={{ textAlign: 'center', color: '#64748b', padding: '48px 24px' }}>
+                        {searchQuery
+                          ? `No in-progress tickets found matching Booking ID "${searchQuery}".`
+                          : 'No operations currently in transit.'}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {progressTickets.length === 0 ? (
-                      <tr>
-                        <td colSpan="6" className="text-center text-muted py-4">
-                          {searchQuery
-                            ? `No in-progress tickets found for Booking ID "${searchQuery}".`
-                            : 'No tickets in progress.'}
-                        </td>
-                      </tr>
-                    ) : (
-                      paginate(progressTickets, 'progress').map(t => {
-                        const sup = supervisors.find(
-                          s => s.userId === t.assignedSupervisorID
-                        );
-                        return (
-                          <tr key={t.ticketID}>
-                            <td>{t.ticketNo}</td>
-                            <td>{t.bookingID}</td>
-                            <td>{t.fromLocation} → {t.toLocation}</td>
-                            <td><span className="badge bg-warning text-dark">In Progress</span></td>
-                            <td>{sup ? `${sup.firstName} ${sup.lastName}` : 'N/A'}</td>
-                            <td className="text-end">
-                              <div className="btn-group btn-group-sm">
-                                <button
-                                  className="btn btn-outline-secondary"
-                                  title="View"
-                                  onClick={() => handleView(t)}
-                                >
-                                  <i className="fas fa-eye"></i>
-                                </button>
-                                <button
-                                  className="btn btn-outline-success"
-                                  onClick={() =>
-                                    handleStatusChange(t.ticketID, 'Closed')
-                                  }
-                                >
-                                  <i className="fas fa-check"></i>
-                                </button>
-                                <button
-                                  className="btn btn-outline-danger"
-                                  onClick={() =>
-                                    handleStatusChange(t.ticketID, 'Cancelled')
-                                  }
-                                >
-                                  <i className="fas fa-times"></i>
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                  ) : (
+                    paginate(progressTickets, 'progress').map(t => {
+                      const sup = supervisors.find(s => s.userId === t.assignedSupervisorID);
+                      return (
+                        <tr key={t.ticketID}>
+                          <td><span className="ticket-code">{t.ticketNo}</span></td>
+                          <td><span className="booking-code">#{t.bookingID}</span></td>
+                          <td>
+                            <div className="route-text">
+                              <MapPin size={13} style={{ color: '#94a3b8' }} />
+                              <span>{t.fromLocation}</span>
+                              <ArrowRight size={12} className="route-arrow" />
+                              <span>{t.toLocation}</span>
+                            </div>
+                          </td>
+                          <td><span className="tickets-badge badge-progress">In Progress</span></td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '13px', fontWeight: 500 }}>
+                              <User size={13} style={{ color: '#64748b' }} />
+                              <span>{sup ? `${sup.firstName} ${sup.lastName}` : 'N/A'}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="action-buttons-wrap">
+                              <button
+                                type="button"
+                                className="btn-action-round"
+                                title="Inspect Details"
+                                onClick={() => handleView(t)}
+                              >
+                                <Eye size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-action-round success"
+                                title="Close & Resolve Ticket"
+                                onClick={() => handleStatusChange(t.ticketID, 'Closed')}
+                              >
+                                <Check size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-action-round danger"
+                                title="Cancel Ticket"
+                                onClick={() => handleStatusChange(t.ticketID, 'Cancelled')}
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
               <Pagination total={progressTickets.length} tab="progress" />
             </>
           )}
 
-          {/* ================= CANCELLED ================= */}
+          {/* ================= CANCELLED TICKETS ================= */}
           {activeTab === 'cancel' && (
             <>
-              <div className="table-responsive">
-                <table className="table table-hover align-middle">
-                  <thead className="table-light">
+              <table className="tickets-table">
+                <thead>
+                  <tr>
+                    <th>Ticket Ref</th>
+                    <th>Booking ID</th>
+                    <th>Logistical Route</th>
+                    <th>Current Status</th>
+                    <th>Cancellation Incident Reason</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cancelledTickets.length === 0 ? (
                     <tr>
-                      <th>Ticket</th>
-                      <th>Booking</th>
-                      <th>Route</th>
-                      <th>Status</th>
-                      <th>Reason</th>
-                      <th className="text-end">Action</th>
+                      <td colSpan="6" style={{ textAlign: 'center', color: '#64748b', padding: '48px 24px' }}>
+                        {searchQuery
+                          ? `No cancelled tickets found matching Booking ID "${searchQuery}".`
+                          : 'No cancelled incident logs recorded.'}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {cancelledTickets.length === 0 ? (
-                      <tr>
-                        <td colSpan="6" className="text-center text-muted py-4">
-                          {searchQuery
-                            ? `No cancelled tickets found for Booking ID "${searchQuery}".`
-                            : 'No cancelled tickets.'}
+                  ) : (
+                    paginate(cancelledTickets, 'cancel').map(t => (
+                      <tr key={t.ticketID}>
+                        <td><span className="ticket-code">{t.ticketNo}</span></td>
+                        <td><span className="booking-code">#{t.bookingID}</span></td>
+                        <td>
+                          <div className="route-text">
+                            <MapPin size={13} style={{ color: '#94a3b8' }} />
+                            <span>{t.fromLocation}</span>
+                            <ArrowRight size={12} className="route-arrow" />
+                            <span>{t.toLocation}</span>
+                          </div>
                         </td>
-                      </tr>
-                    ) : (
-                      paginate(cancelledTickets, 'cancel').map(t => (
-                        <tr key={t.ticketID}>
-                          <td>{t.ticketNo}</td>
-                          <td>{t.bookingID}</td>
-                          <td>{t.fromLocation} → {t.toLocation}</td>
-                          <td><span className="badge bg-danger">Cancelled</span></td>
-                          <td>{t.reason || '—'}</td>
-                          <td className="text-end">
+                        <td><span className="tickets-badge badge-cancelled">Cancelled</span></td>
+                        <td style={{ color: '#ef4444', fontWeight: 500, fontSize: '13px' }}>
+                          {t.reason || 'No cancellation reason provided.'}
+                        </td>
+                        <td>
+                          <div className="action-buttons-wrap">
                             <button
-                              className="btn btn-outline-secondary btn-sm"
-                              title="View"
+                              type="button"
+                              className="btn-action-round"
+                              title="Inspect Details"
                               onClick={() => handleView(t)}
                             >
-                              <i className="fas fa-eye"></i>
+                              <Eye size={14} />
                             </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
               <Pagination total={cancelledTickets.length} tab="cancel" />
             </>
           )}
 
-          {/* ================= CLOSED ================= */}
+          {/* ================= RESOLVED TICKETS ================= */}
           {activeTab === 'closed' && (
             <>
-              <div className="table-responsive">
-                <table className="table table-hover align-middle">
-                  <thead className="table-light">
+              <table className="tickets-table">
+                <thead>
+                  <tr>
+                    <th>Ticket Ref</th>
+                    <th>Booking ID</th>
+                    <th>Logistical Route</th>
+                    <th>Current Status</th>
+                    <th>Assigned Supervisor</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {closedTickets.length === 0 ? (
                     <tr>
-                      <th>Ticket</th>
-                      <th>Booking</th>
-                      <th>Route</th>
-                      <th>Status</th>
-                      <th>Assigned</th>
-                      <th className="text-end">Action</th>
+                      <td colSpan="6" style={{ textAlign: 'center', color: '#64748b', padding: '48px 24px' }}>
+                        {searchQuery
+                          ? `No closed tickets found matching Booking ID "${searchQuery}".`
+                          : 'No resolved tickets logged in history archive.'}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {closedTickets.length === 0 ? (
-                      <tr>
-                        <td colSpan="6" className="text-center text-muted py-4">
-                          {searchQuery
-                            ? `No closed tickets found for Booking ID "${searchQuery}".`
-                            : 'No closed tickets.'}
-                        </td>
-                      </tr>
-                    ) : (
-                      paginate(closedTickets, 'closed').map(t => {
-                        const sup = supervisors.find(
-                          s => s.userId === t.assignedSupervisorID
-                        );
-                        return (
-                          <tr key={t.ticketID}>
-                            <td>{t.ticketNo}</td>
-                            <td>{t.bookingID}</td>
-                            <td>{t.fromLocation} → {t.toLocation}</td>
-                            <td><span className="badge bg-success">Closed</span></td>
-                            <td>{sup ? `${sup.firstName} ${sup.lastName}` : '—'}</td>
-                            <td className="text-end">
+                  ) : (
+                    paginate(closedTickets, 'closed').map(t => {
+                      const sup = supervisors.find(s => s.userId === t.assignedSupervisorID);
+                      return (
+                        <tr key={t.ticketID}>
+                          <td><span className="ticket-code">{t.ticketNo}</span></td>
+                          <td><span className="booking-code">#{t.bookingID}</span></td>
+                          <td>
+                            <div className="route-text">
+                              <MapPin size={13} style={{ color: '#94a3b8' }} />
+                              <span>{t.fromLocation}</span>
+                              <ArrowRight size={12} className="route-arrow" />
+                              <span>{t.toLocation}</span>
+                            </div>
+                          </td>
+                          <td><span className="tickets-badge badge-closed">Closed</span></td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '13px', fontWeight: 500 }}>
+                              <User size={13} style={{ color: '#64748b' }} />
+                              <span>{sup ? `${sup.firstName} ${sup.lastName}` : '—'}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="action-buttons-wrap">
                               <button
-                                className="btn btn-outline-secondary btn-sm"
-                                title="View"
+                                type="button"
+                                className="btn-action-round"
+                                title="Inspect Details"
                                 onClick={() => handleView(t)}
                               >
-                                <i className="fas fa-eye"></i>
+                                <Eye size={14} />
                               </button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
               <Pagination total={closedTickets.length} tab="closed" />
             </>
           )}
         </div>
-
-        <div className="card-footer d-flex justify-content-between">
-          <button className="btn btn-outline-primary" onClick={onRefresh}>
-            Refresh
-          </button>
-
-          <button className="btn btn-success" onClick={handleDownloadExcel}>
-            Download Excel
-          </button>
-        </div>
       </div>
-{/* ================= VIEW TICKET MODAL ================= */}
-{viewTicket && (
-  <>
-    <div
-      className="modal fade show"
-      style={{
-        display: 'block',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: 1055,
-        overflowY: 'auto',
-      }}
-      tabIndex="-1"
-      role="dialog"
-      aria-modal="true"
-    >
-      <div
-        className="modal-dialog modal-dialog-centered"
-        style={{ maxWidth: 480, margin: '1.75rem auto' }}
-      >
-        <div
-          className="modal-content"
-          style={{
-            background: '#fff',
-            borderRadius: 8,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-          }}
-        >
-          <div
-            className="modal-header"
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '1rem 1.25rem',
-              borderBottom: '1px solid #dee2e6',
-            }}
-          >
-            <h5 className="modal-title mb-0">Ticket {viewTicket.ticketNo}</h5>
-            <button
-              type="button"
-              className="btn-close"
-              aria-label="Close"
-              onClick={closeViewModal}
-            ></button>
-          </div>
 
-          <div className="modal-body" style={{ padding: '1.25rem' }}>
-            {[
-              ['Booking ID', viewTicket.bookingID],
-              ['Route', `${viewTicket.fromLocation} → ${viewTicket.toLocation}`],
-              ['Status', viewTicket.status],
-              [
-                'Assigned Supervisor',
-                viewTicketSupervisor
-                  ? `${viewTicketSupervisor.firstName} ${viewTicketSupervisor.lastName}`
-                  : 'Unassigned',
-              ],
-              ...(viewTicket.reason ? [['Reason', viewTicket.reason]] : []),
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                style={{
-                  display: 'flex',
-                  gap: '1rem',
-                  padding: '0.4rem 0',
-                  borderBottom: '1px solid #f1f1f1',
-                }}
-              >
-                <div style={{ flex: '0 0 45%', fontWeight: 600, color: '#555' }}>
-                  {label}
+      {/* ================= VIEW TICKET DETAIL MODAL ================= */}
+      {viewTicket && (
+        <div className="modal-overlay" onClick={closeViewModal}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-card-header">
+              <h5 className="modal-card-title">Inspection Log: {viewTicket.ticketNo}</h5>
+              <button type="button" className="btn-close-modal" onClick={closeViewModal}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-card-body">
+              <div className="modal-detail-row">
+                <div className="modal-detail-label">Booking Reference</div>
+                <div className="modal-detail-value">
+                  <span className="booking-code" style={{ padding: '3px 8px', fontSize: '12.5px' }}>
+                    #{viewTicket.bookingID}
+                  </span>
                 </div>
-                <div style={{ flex: 1 }}>{value}</div>
               </div>
-            ))}
-          </div>
 
-          <div
-            className="modal-footer"
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              padding: '1rem 1.25rem',
-              borderTop: '1px solid #dee2e6',
-            }}
-          >
-            <button type="button" className="btn btn-secondary" onClick={closeViewModal}>
-              Close
-            </button>
+              <div className="modal-detail-row">
+                <div className="modal-detail-label">Origin Station</div>
+                <div className="modal-detail-value" style={{ fontWeight: 500 }}>{viewTicket.fromLocation}</div>
+              </div>
+
+              <div className="modal-detail-row">
+                <div className="modal-detail-label">Destination Station</div>
+                <div className="modal-detail-value" style={{ fontWeight: 500 }}>{viewTicket.toLocation}</div>
+              </div>
+
+              <div className="modal-detail-row">
+                <div className="modal-detail-label">Operational Status</div>
+                <div className="modal-detail-value">
+                  {viewTicket.status === 'Open' && <span className="tickets-badge badge-open">Open / Provisioned</span>}
+                  {viewTicket.status === 'In Progress' && <span className="tickets-badge badge-progress">In Progress</span>}
+                  {viewTicket.status === 'Cancelled' && <span className="tickets-badge badge-cancelled">Cancelled</span>}
+                  {viewTicket.status === 'Closed' && <span className="tickets-badge badge-closed">Closed / Resolved</span>}
+                </div>
+              </div>
+
+              <div className="modal-detail-row">
+                <div className="modal-detail-label">Assigned Dispatcher</div>
+                <div className="modal-detail-value" style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }}>
+                  <User size={13} style={{ color: '#64748b' }} />
+                  <span>
+                    {viewTicketSupervisor
+                      ? `${viewTicketSupervisor.firstName} ${viewTicketSupervisor.lastName}`
+                      : 'Unassigned / Not Provisioned'}
+                  </span>
+                </div>
+              </div>
+
+              {viewTicket.reason && (
+                <div className="modal-detail-row" style={{ backgroundColor: '#fef2f2', padding: '10px 12px', borderRadius: '6px', border: '1px solid #fee2e2', marginTop: '12px' }}>
+                  <div className="modal-detail-label" style={{ color: '#ef4444' }}>Incident Reason</div>
+                  <div className="modal-detail-value" style={{ color: '#b91c1c', fontWeight: 500 }}>{viewTicket.reason}</div>
+                </div>
+              )}
+
+              {/* Graphical Process Timeline Tracker */}
+              <div className="ticket-process-timeline">
+                {/* Step 1: Open */}
+                <div className={`timeline-step ${
+                  viewTicket.status === 'Open' ? 'active' : 
+                  (viewTicket.status === 'In Progress' || viewTicket.status === 'Closed' ? 'completed' : '')
+                }`}>
+                  <div className="timeline-node">1</div>
+                  <div className="timeline-label">Open</div>
+                </div>
+
+                {/* Step 2: In Progress */}
+                <div className={`timeline-step ${
+                  viewTicket.status === 'In Progress' ? 'active' : 
+                  (viewTicket.status === 'Closed' ? 'completed' : '')
+                }`}>
+                  <div className="timeline-node">2</div>
+                  <div className="timeline-label">In Transit</div>
+                </div>
+
+                {/* Step 3: Resolved / Cancelled */}
+                {viewTicket.status === 'Cancelled' ? (
+                  <div className="timeline-step cancelled">
+                    <div className="timeline-node"><X size={10} /></div>
+                    <div className="timeline-label">Cancelled</div>
+                  </div>
+                ) : (
+                  <div className={`timeline-step ${viewTicket.status === 'Closed' ? 'completed' : ''}`}>
+                    <div className="timeline-node">3</div>
+                    <div className="timeline-label">Resolved</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-card-footer">
+              <button type="button" className="btn-formal btn-formal-outline" onClick={closeViewModal}>
+                Dismiss Log
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <div
-      className="modal-backdrop fade show"
-      onClick={closeViewModal}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: 'rgba(0,0,0,0.5)',
-        zIndex: 1050,
-      }}
-    ></div>
-  </>
-)}
+      )}
     </div>
   );
 };

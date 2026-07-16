@@ -1,5 +1,19 @@
 import './Sidebar.css';
 import { useState } from 'react';
+import { 
+  Home, 
+  Truck, 
+  Users, 
+  UserSquare2, 
+  UserCheck, 
+  Ticket, 
+  FolderEdit, 
+  BarChart3, 
+  Settings as SettingsIcon, 
+  Shield, 
+  LogOut,
+  ChevronDown
+} from 'lucide-react';
 
 
 const Sidebar = ({
@@ -20,21 +34,26 @@ const Sidebar = ({
 
   // 📋 Navigation items with submenu support
   const navItems = [
-    { id: 'dashboard', icon: 'fas fa-home', text: 'Dashboard' },
-    { id: 'vehicle', icon: 'fas fa-truck',text: 'Vehicles'},
-    { id: 'users',icon: 'fas fa-users',text: 'Users',
-       submenu: [
-    { id: 'adminUsers', icon: 'fas fa-users-cog', text: 'Admin Users' },
-    { id: 'supervisor', icon: 'fas fa-user-tie', text: 'Supervisor' } ] },
-    { id: 'tickets', icon: 'fas fa-ticket-alt', text: 'Tickets' },
-    { id: 'manageUserPage', icon: 'fas fa-user-edit',text: 'Ticket Management' },
-    { id: 'reports', icon: 'fas fa-chart-bar', text: 'Reports' },
-    { id: 'settings', icon: 'fas fa-cog', text: 'Settings' }
+    { id: 'dashboard', icon: Home, text: 'Dashboard' },
+    { id: 'vehicle', icon: Truck, text: 'Vehicles' },
+    { 
+      id: 'users', 
+      icon: Users, 
+      text: 'Users',
+      submenu: [
+        { id: 'adminUsers', icon: UserSquare2, text: 'Admin Users' },
+        { id: 'supervisor', icon: UserCheck, text: 'Supervisor' } 
+      ] 
+    },
+    { id: 'tickets', icon: Ticket, text: 'Tickets' },
+    { id: 'manageUserPage', icon: FolderEdit, text: 'Ticket Management' },
+    { id: 'reports', icon: BarChart3, text: 'Reports' },
+    { id: 'settings', icon: SettingsIcon, text: 'Settings' }
   ];
 
   // 🔐 Filter menu based on role
   const filteredNavItems = navItems.filter(item => {
-  const isItemAccessible = roleAccess[roleId]?.includes(item.id);
+    const isItemAccessible = roleAccess[roleId]?.includes(item.id);
     
     // If item has submenu, filter submenu items as well
     if (item.submenu) {
@@ -64,7 +83,9 @@ const Sidebar = ({
     <div className={sidebarClass} id="sidebar">
       {/* Sidebar Header */}
       <div className="sidebar-header">
-        <i className="fas fa-shield-alt"></i>
+        <div className="logo-container">
+          <Shield size={22} className="logo-icon" />
+        </div>
         <h5>PackYatra</h5>
       </div>
 
@@ -73,76 +94,83 @@ const Sidebar = ({
         <div className="sidebar-nav-label">Menu</div>
 
         {/* 🔐 Role Based Menu */}
-        {filteredNavItems.map(item => (
-          <div key={item.id} className="nav-item-wrapper">
-            <div className="nav-item-container">
-              <a
-                onClick={() => {
-                  if (item.submenu && item.submenu.length > 0) {
-                    toggleSubmenu(item.id);
-                  } else {
-                    handleMenuClick(item.id);
-                  }
-                }}
-                className={`nav-item ${currentPage === item.id ? 'active' : ''}`}
-                style={{ cursor: 'pointer' }}
-              >
-                <i className={item.icon}></i>
-                <span className="nav-text">{item.text}</span>
-                
-                {/* Dropdown arrow for items with submenu */}
-                {item.submenu && item.submenu.length > 0 && (
-                  <i
-                    className={`fas fa-chevron-down submenu-icon ${
-                      expandedMenu === item.id ? 'expanded' : ''
-                    }`}
-                  ></i>
-                )}
-              </a>
-            </div>
+        {filteredNavItems.map(item => {
+          const IconComponent = item.icon;
+          const hasSubmenu = item.submenu && item.submenu.length > 0;
+          const isSubmenuOpen = expandedMenu === item.id;
+          const isCurrentActive = currentPage === item.id || (hasSubmenu && item.submenu.some(sub => sub.id === currentPage));
 
-            {/* Submenu Items */}
-            {item.submenu && item.submenu.length > 0 && (
-              <div
-                className={`submenu ${expandedMenu === item.id ? 'show' : ''}`}
-              >
-                {item.submenu.map(subitem => (
-                  <a
-                    key={subitem.id}
-                    onClick={() => handleMenuClick(subitem.id)}
-                    className={`submenu-item ${
-                      currentPage === subitem.id ? 'active' : ''
-                    }`}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <i className={subitem.icon}></i>
-                    <span className="nav-text">{subitem.text}</span>
-                  </a>
-                ))}
+          return (
+            <div key={item.id} className="nav-item-wrapper">
+              <div className="nav-item-container">
+                <a
+                  onClick={() => {
+                    if (hasSubmenu) {
+                      toggleSubmenu(item.id);
+                    } else {
+                      handleMenuClick(item.id);
+                    }
+                  }}
+                  className={`nav-item ${isCurrentActive ? 'active' : ''}`}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <IconComponent size={18} className="nav-icon-lucide" />
+                  <span className="nav-text">{item.text}</span>
+                  
+                  {/* Dropdown arrow for items with submenu */}
+                  {hasSubmenu && (
+                    <ChevronDown
+                      size={14}
+                      className={`submenu-icon ${isSubmenuOpen ? 'expanded' : ''}`}
+                    />
+                  )}
+                </a>
               </div>
-            )}
-          </div>
-        ))}
+
+              {/* Submenu Items */}
+              {hasSubmenu && (
+                <div className={`submenu ${isSubmenuOpen ? 'show' : ''}`}>
+                  {item.submenu.map(subitem => {
+                    const SubIconComponent = subitem.icon;
+                    const isSubActive = currentPage === subitem.id;
+                    return (
+                      <a
+                        key={subitem.id}
+                        onClick={() => handleMenuClick(subitem.id)}
+                        className={`submenu-item ${isSubActive ? 'active' : ''}`}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <SubIconComponent size={14} className="nav-icon-lucide sub-icon" />
+                        <span className="nav-text">{subitem.text}</span>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       {/* Sidebar Footer */}
       <div className="sidebar-footer">
-        <div className="d-flex align-items-center">
-          <div className="flex-shrink-0">
-            <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>{initials}
+        <div className="footer-profile-wrapper">
+          <div className="avatar-wrapper">
+            <div className="avatar-circle">
+              {initials}
             </div>
           </div>
-          <div className="flex-grow-1 ms-3" style={{ minWidth: 0 }}>
-            <p className="mb-0 fw-medium text-truncate">
+          <div className="profile-details">
+            <p className="profile-name">
               {userData?.firstName} {userData?.lastName}
             </p>
-            <small className="text-white-50">
+            <p className="profile-role">
               {roleId === 1 ? 'Administrator' : 'Supervisor'}
-            </small>
+            </p>
           </div>
-          <a onClick={onLogout} className="text-white-50 ms-2" style={{ cursor: 'pointer' }} title="Log out" >
-            <i className="fas fa-sign-out-alt"></i>
-          </a>
+          <button onClick={onLogout} className="logout-btn" title="Log out">
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
     </div>

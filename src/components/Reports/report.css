@@ -18,7 +18,7 @@
         }
         
         .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
             color: white;
             padding: 25px 30px;
             border-radius: 10px 10px 0 0;
@@ -74,9 +74,9 @@
         }
         
         .tab-btn.active {
-            color: #3498db;
+            color: #2563eb;
             background-color: white;
-            border-bottom: 3px solid #3498db;
+            border-bottom: 3px solid #06b6d4;
         }
         
         .tab-content {
@@ -93,7 +93,7 @@
             padding: 25px;
             border-radius: 8px;
             margin-bottom: 30px;
-            border-left: 4px solid #3498db;
+            border-left: 4px solid #06b6d4;
         }
         
         .input-group {
@@ -126,13 +126,13 @@
         
         input:focus {
             outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
         }
         
         .btn {
             padding: 14px 28px;
-            background-color: #3498db;
+            background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
             color: white;
             border: none;
             border-radius: 6px;
@@ -146,9 +146,9 @@
         }
         
         .btn:hover {
-            background-color: #2980b9;
+            opacity: 0.95;
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         }
         
         .btn-secondary {
@@ -203,7 +203,7 @@
             justify-content: space-between;
             margin-bottom: 30px;
             padding-bottom: 20px;
-            border-bottom: 2px solid #3498db;
+            border-bottom: 2px solid #2563eb;
         }
         
         .preview-title {
@@ -259,7 +259,7 @@
         }
         
         .footer-logo {
-            color: #3498db;
+            color: #2563eb;
             font-weight: 700;
         }
         

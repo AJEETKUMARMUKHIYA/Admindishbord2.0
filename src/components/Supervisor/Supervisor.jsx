@@ -1,156 +1,300 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import AddSupervisor from './AddSupervisor';
 import SupervisorList from './SupervisorList';
-import { RefreshCw, UserPlus, X } from 'lucide-react';
+import axiosClient from '../../AxiosClient';
+import { showToast } from '../ToastNotification';
+import './Supervisor.css';
 
-const Supervisor = ({ supervisors, onAddSupervisor, onToggleSupervisor, onDeleteSupervisor, onRefresh }) => {
+import { 
+  RefreshCw, 
+  UserPlus, 
+  X, 
+  Users, 
+  UserCheck, 
+  UserX, 
+  Search, 
+  ShieldAlert,
+  Inbox
+} from 'lucide-react';
+
+const Supervisor = ({ supervisors = [], onRefresh }) => {
   const [newSupervisor, setNewSupervisor] = useState({
+    userId: null,
     firstName: '',
     lastName: '',
     mobile: '',
-    email: ''
+    email: '',
+    password: ''
   });
   const [panelOpen, setPanelOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleAddSupervisor = () => {
-    onAddSupervisor(newSupervisor);
-    setNewSupervisor({ firstName: '', lastName: '', mobile: '', email: '' });
-    setPanelOpen(false);
-  };
-
-  const handleInputChange = (e) => {
-    setNewSupervisor({
-      ...newSupervisor,
-      [e.target.id]: e.target.value
+  // Search filter
+  const filteredSupervisors = useMemo(() => {
+    return supervisors.filter((s) => {
+      const query = searchQuery.toLowerCase();
+      const first = s.firstName?.toLowerCase() || '';
+      const last = s.lastName?.toLowerCase() || '';
+      const email = s.email?.toLowerCase() || '';
+      const mobile = s.mobile || '';
+      const id = String(s.userId || '');
+      return first.includes(query) || last.includes(query) || email.includes(query) || mobile.includes(query) || id.includes(query);
     });
-  };
+  }, [supervisors, searchQuery]);
 
-  // Purely presentational — doesn't touch supervisors data, just summarizes it.
+  // Purely presentational stats
   const counts = useMemo(() => {
-    const list = supervisors || [];
     return {
-      total: list.length,
-      active: list.filter((s) => s.active).length,
-      inactive: list.filter((s) => !s.active).length,
+      total: supervisors.length,
+      active: supervisors.filter((s) => s.active).length,
+      inactive: supervisors.filter((s) => !s.active).length,
     };
   }, [supervisors]);
 
-  const statCard = (label, value) => (
-    <div
-      style={{
-        fontFamily: 'Inter, sans-serif',
-        background: '#fff',
-        border: '1px solid var(--line)',
-        borderRadius: 12,
-        padding: '14px 18px',
-        flex: '1 1 140px',
-        minWidth: 140,
-      }}
-    >
-      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.6, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
-        {label}
-      </div>
-      <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 26, fontWeight: 700, color: 'var(--ink)' }}>
-        {value}
-      </div>
-    </div>
-  );
+  // Open Add dialog
+  const handleOpenAdd = () => {
+    setNewSupervisor({
+      userId: null,
+      firstName: '',
+      lastName: '',
+      mobile: '',
+      email: '',
+      password: ''
+    });
+    setIsEditMode(false);
+    setPanelOpen(true);
+  };
+
+  // Open Edit dialog
+  const handleOpenEdit = (supervisor) => {
+    setNewSupervisor({
+      userId: supervisor.userId,
+      firstName: supervisor.firstName || '',
+      lastName: supervisor.lastName || '',
+      mobile: supervisor.mobile || '',
+      email: supervisor.email || '',
+      password: '' // Don't pre-populate passwords
+    });
+    setIsEditMode(true);
+    setPanelOpen(true);
+  };
+
+  // Form input change handler
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+    setNewSupervisor(prev => ({
+      ...prev,
+      [id]: value
+    }));
+  };
+
+  // Save (Create or Update)
+  const handleSaveSupervisor = async () => {
+    setSubmitting(true);
+    try {
+      if (isEditMode) {
+        // Update supervisor
+        const payload = {
+          userId: newSupervisor.userId,
+          firstName: newSupervisor.firstName,
+          lastName: newSupervisor.lastName,
+          email: newSupervisor.email,
+          mobile: newSupervisor.mobile,
+          defaultAccountId: 1,
+          roleId: 2, // Role 2 is Supervisor
+          active: true // Keep active by default on edit
+        };
+        await axiosClient.put(`/AdminUser/UpdateUser/${newSupervisor.userId}`, payload);
+        showToast.success('Supervisor details updated successfully!');
+      } else {
+        // Create supervisor
+        const payload = {
+          firstName: newSupervisor.firstName,
+          lastName: newSupervisor.lastName,
+          email: newSupervisor.email,
+          mobile: newSupervisor.mobile,
+          password: newSupervisor.password || '123456',
+          defaultAccountId: 1,
+          roleId: 2, // Role 2 is Supervisor
+          active: true
+        };
+        await axiosClient.post('/AdminUser/CreateUser', payload);
+        showToast.success('New supervisor created successfully!');
+      }
+      setPanelOpen(false);
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      showToast.error('Operation failed: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Toggle status (Activate / Deactivate)
+  const handleToggleSupervisorStatus = async (supervisor) => {
+    try {
+      const payload = {
+        userId: supervisor.userId,
+        firstName: supervisor.firstName,
+        lastName: supervisor.lastName,
+        email: supervisor.email,
+        mobile: supervisor.mobile,
+        defaultAccountId: supervisor.defaultAccountId || 1,
+        roleId: 2,
+        active: !supervisor.active
+      };
+      await axiosClient.put(`/AdminUser/UpdateUser/${supervisor.userId}`, payload);
+      showToast.success(`Supervisor ${!supervisor.active ? 'activated' : 'deactivated'} successfully!`);
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      showToast.error('Failed to change status: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  // Delete supervisor
+  const handleDeleteSupervisor = async (userId) => {
+    if (window.confirm('Are you sure you want to permanently delete this supervisor?')) {
+      try {
+        await axiosClient.delete(`/AdminUser/DeleteUser/${userId}`);
+        showToast.success('Supervisor deleted successfully!');
+        if (onRefresh) onRefresh();
+      } catch (error) {
+        showToast.error('Failed to delete supervisor: ' + (error.response?.data?.message || error.message));
+      }
+    }
+  };
 
   return (
-    <div
-      id="supervisor"
-      className="page"
-      style={{
-        fontFamily: 'Inter, sans-serif',
-        background: 'var(--paper)',
-        minHeight: '100%',
-        padding: '32px clamp(16px, 4vw, 48px)',
-        color: 'var(--ink)',
-        position: 'relative',
-      }}
-    >
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');
-        :root {
-          --ink: #12151C;
-          --paper: #F5F6F4;
-          --line: #E3E5E1;
-          --accent: #2952E3;
-          --accent-soft: #EAEFFD;
-          --amber: #C67C1F;
-          --amber-soft: #FAF0E1;
-          --success: #1E8E5A;
-          --danger: #C6403E;
-          --muted: #6B7280;
-        }
-        #supervisor .au-btn { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13.5px; border-radius: 9px; padding: 9px 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; border: 1px solid transparent; transition: all 0.15s ease; }
-        #supervisor .au-btn-ghost { background: #fff; border-color: var(--line); color: var(--ink); }
-        #supervisor .au-btn-ghost:hover { border-color: var(--ink); }
-        #supervisor .au-btn-dark { background: var(--ink); color: #fff; }
-        #supervisor .au-btn-dark:hover { background: #24283a; }
-        #supervisor .au-icon-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); transition: all 0.15s ease; }
-        #supervisor .au-overlay { position: fixed; inset: 0; background: rgba(18,21,28,0.42); z-index: 40; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; animation: auFade 0.15s ease; }
-        #supervisor .au-panel { position: relative; width: min(680px, 100%); max-height: 88vh; background: #fff; border-radius: 16px; z-index: 50; box-shadow: 0 24px 64px rgba(18,21,28,0.28); animation: auPop 0.18s cubic-bezier(.32,.72,0,1); display: flex; flex-direction: column; overflow: hidden; }
-        @keyframes auFade { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes auPop { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        #supervisor .au-list-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
-      `}</style>
-
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16, marginBottom: 28 }}>
+    <div className="sp-page">
+      {/* Header section */}
+      <div className="sp-header">
         <div>
-          <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 12, color: 'var(--accent)', fontWeight: 500, letterSpacing: 0.4, marginBottom: 6 }}>
-            TEAM MANAGEMENT
+          <div className="sp-eyebrow">
+            <ShieldAlert size={12} /> Operations · Command Center
           </div>
-          <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 30, fontWeight: 700, margin: 0, letterSpacing: -0.4 }}>
-            Supervisors
-          </h1>
+          <h1 className="sp-title">Field Supervisors</h1>
+          <p className="sp-subtitle">Manage registered supervisors, configure field operations credentials, and oversee on-site dispatch staff.</p>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className="au-btn au-btn-ghost" onClick={onRefresh}>
-            <RefreshCw size={15} /> Refresh
+        <div className="sp-actions">
+          <button
+            type="button"
+            className="sp-btn sp-btn--ghost"
+            onClick={onRefresh}
+            disabled={submitting}
+          >
+            <RefreshCw size={14} className={submitting ? 'sp-spin' : ''} />
+            <span>Sync Directory</span>
           </button>
-          <button className="au-btn au-btn-dark" onClick={() => setPanelOpen(true)}>
-            <UserPlus size={15} /> Add supervisor
+          <button
+            type="button"
+            className="sp-btn sp-btn--solid"
+            onClick={handleOpenAdd}
+          >
+            <UserPlus size={14} />
+            <span>Add Supervisor</span>
           </button>
         </div>
       </div>
 
-      {/* Stat strip — presentational summary of the supervisors prop */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        {statCard('Total', counts.total)}
-        {statCard('Active', counts.active)}
-        {statCard('Inactive', counts.inactive)}
+      {/* Bento-Style Stats Cards Grid */}
+      <div className="sp-stats-grid">
+        <div className="sp-stat-card">
+          <span className="sp-stat-card__tab" style={{ backgroundColor: 'var(--sp-primary)' }} />
+          <div className="sp-stat-card__info">
+            <span className="sp-stat-card__label">Total Supervisors</span>
+            <div className="sp-stat-card__value">{counts.total}</div>
+          </div>
+          <div className="sp-stat-card__icon" style={{ backgroundColor: 'var(--sp-primary-light)', color: 'var(--sp-primary)' }}>
+            <Users size={20} />
+          </div>
+        </div>
+
+        <div className="sp-stat-card">
+          <span className="sp-stat-card__tab" style={{ backgroundColor: 'var(--sp-green)' }} />
+          <div className="sp-stat-card__info">
+            <span className="sp-stat-card__label">Active Field Duty</span>
+            <div className="sp-stat-card__value">{counts.active}</div>
+          </div>
+          <div className="sp-stat-card__icon sp-pulse" style={{ backgroundColor: 'var(--sp-green-light)', color: 'var(--sp-green)' }}>
+            <UserCheck size={20} />
+          </div>
+        </div>
+
+        <div className="sp-stat-card">
+          <span className="sp-stat-card__tab" style={{ backgroundColor: 'var(--sp-text-mute)' }} />
+          <div className="sp-stat-card__info">
+            <span className="sp-stat-card__label">Standby / Standdown</span>
+            <div className="sp-stat-card__value">{counts.inactive}</div>
+          </div>
+          <div className="sp-stat-card__icon" style={{ backgroundColor: '#f1f5f9', color: 'var(--sp-text-mute)' }}>
+            <UserX size={20} />
+          </div>
+        </div>
       </div>
 
-      {/* Existing SupervisorList component, untouched, just wrapped in the same card shell as AdminUsers */}
-      <div className="au-list-card">
+      {/* Primary Data Binding Table Frame */}
+      <div className="sp-card-frame">
+        {/* Search & Control Strip */}
+        <div className="sp-control-strip">
+          <div className="sp-search-box">
+            <Search size={14} className="sp-search-icon" />
+            <input
+              type="text"
+              placeholder="Search supervisors by name, email, ID…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="sp-search-input"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="sp-search-clear"
+                onClick={() => setSearchQuery('')}
+                title="Clear search"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+          <div className="sp-results-indicator">
+            Showing <strong>{filteredSupervisors.length}</strong> of <strong>{supervisors.length}</strong> supervisors
+          </div>
+        </div>
+
+        {/* Directory List Table */}
         <SupervisorList
-          supervisors={supervisors}
-          onToggleSupervisor={onToggleSupervisor}
-          onDeleteSupervisor={onDeleteSupervisor}
+          supervisors={filteredSupervisors}
+          onToggleSupervisor={handleToggleSupervisorStatus}
+          onDeleteSupervisor={handleDeleteSupervisor}
+          onEditSupervisor={handleOpenEdit}
         />
       </div>
 
-      {/* Add supervisor modal — same shell as AdminUsers' Add admin modal, wrapping the existing AddSupervisor component unchanged */}
+      {/* Elegant Add/Edit Supervisor Dialog Modal Overlay */}
       {panelOpen && (
-        <div className="au-overlay" onClick={() => setPanelOpen(false)}>
-          <div className="au-panel" onClick={(e) => e.stopPropagation()}>
-            <div style={{ padding: '22px 24px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11.5, color: 'var(--accent)', marginBottom: 4 }}>NEW TEAM MEMBER</div>
-                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 19 }}>Add supervisor</div>
+        <div className="sp-dialog-overlay" onClick={() => setPanelOpen(false)}>
+          <div className="sp-dialog-box" onClick={(e) => e.stopPropagation()}>
+            <div className="sp-dialog-header">
+              <div className="sp-dialog-title-group">
+                <span className="sp-dialog-eyebrow">
+                  {isEditMode ? 'Modify Personnel' : 'New Personnel'}
+                </span>
+                <h3 className="sp-dialog-title">
+                  {isEditMode ? 'Edit Supervisor Details' : 'Register New Supervisor'}
+                </h3>
               </div>
-              <button className="au-icon-btn" onClick={() => setPanelOpen(false)}>
+              <button className="sp-dialog-close" onClick={() => setPanelOpen(false)} title="Close">
                 <X size={16} />
               </button>
             </div>
-
-            <div style={{ padding: 24, flex: 1, overflowY: 'auto' }}>
+            <div className="sp-dialog-body">
               <AddSupervisor
                 supervisor={newSupervisor}
                 onInputChange={handleInputChange}
-                onAddSupervisor={handleAddSupervisor}
+                onAddSupervisor={handleSaveSupervisor}
+                isEdit={isEditMode}
               />
             </div>
           </div>

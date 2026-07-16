@@ -3,140 +3,200 @@ export default function QuotationPreview({ data }) {
 
   return (
     <div style={styles.card}>
+      <style>{`
+        .qpv-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 13px;
+          margin-top: 12px;
+        }
+        .qpv-th {
+          text-align: left;
+          padding: 10px 14px;
+          background-color: #f8fafc;
+          color: #475569;
+          font-weight: 700;
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          border-bottom: 1px solid #e2e8f0;
+        }
+        .qpv-td {
+          padding: 10px 14px;
+          border-bottom: 1px solid #e2e8f0;
+          color: #1e293b;
+        }
+        .qpv-row:hover {
+          background-color: #fafafa;
+        }
+      `}</style>
+
+      {/* Corporate Letterhead style */}
       <div style={styles.header}>
-        <h2 style={styles.title}>Quotation Details</h2>
-        <span style={styles.amount}>₹ {data.totalAmount}</span>
+        <div>
+          <span style={styles.meta}>OFFICIAL INVENTORY ESTIMATE</span>
+          <h2 style={styles.title}>Quotation Summary</h2>
+          <span style={styles.quotationNumber}>{data.quotationNumber}</span>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <p style={{ margin: 0, fontSize: "11px", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>Estimated Amount</p>
+          <span style={styles.amount}>₹ {data.totalAmount?.toLocaleString() || "0"}</span>
+        </div>
       </div>
 
+      {/* 2-Column Details Layout */}
       <div style={styles.section}>
-        <div style={styles.row}>
-          <div>
+        <div style={styles.grid}>
+          <div style={styles.fieldBox}>
             <p style={styles.label}>Customer Name</p>
-            <p style={styles.value}>{data.customerName}</p>
+            <p style={styles.value}>{data.customerName || "—"}</p>
           </div>
 
-          <div>
-            <p style={styles.label}>Phone</p>
-            <p style={styles.value}>{data.phone}</p>
+          <div style={styles.fieldBox}>
+            <p style={styles.label}>Contact Phone</p>
+            <p style={styles.value}>{data.phone || "—"}</p>
+          </div>
+
+          <div style={styles.fieldBox}>
+            <p style={styles.label}>Scheduled Pickup Date</p>
+            <p style={styles.value}>{data.pickupDate ? new Date(data.pickupDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : "—"}</p>
+          </div>
+
+          <div style={styles.fieldBox}>
+            <p style={styles.label}>Moving Service</p>
+            <p style={styles.value}>PackYatra Logistics &amp; Moving</p>
           </div>
         </div>
 
-        <div style={styles.row}>
-          <div>
-            <p style={styles.label}>Pickup Date</p>
-            <p style={styles.value}>{data.pickupDate}</p>
-          </div>
+        {/* Full-width fields */}
+        <div style={{ ...styles.fieldBox, marginTop: "12px" }}>
+          <p style={styles.label}>Origin Address (From)</p>
+          <p style={styles.value}>{data.fromAddress || "—"}</p>
         </div>
 
-        <div style={styles.row}>
-          <div>
-            <p style={styles.label}>From</p>
-            <p style={styles.value}>{data.fromAddress}</p>
-          </div>
-        </div>
-
-        <div style={styles.row}>
-          <div>
-            <p style={styles.label}>To</p>
-            <p style={styles.value}>{data.toAddress}</p>
-          </div>
+        <div style={{ ...styles.fieldBox, marginTop: "12px" }}>
+          <p style={styles.label}>Destination Address (To)</p>
+          <p style={styles.value}>{data.toAddress || "—"}</p>
         </div>
       </div>
 
+      {/* Table Section */}
       <div style={styles.itemsSection}>
-        <h3 style={styles.itemsTitle}>Items</h3>
+        <h3 style={styles.itemsTitle}>Itemized Moving List</h3>
 
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>Item Name</th>
-              <th style={styles.th}>Quantity</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.items?.map((item, index) => (
-              <tr key={index}>
-                <td style={styles.td}>{item.name}</td>
-                <td style={styles.td}>{item.quantity}</td>
+        {data.items && data.items.length > 0 ? (
+          <table className="qpv-table">
+            <thead>
+              <tr>
+                <th className="qpv-th" style={{ width: "70%" }}>Item Description</th>
+                <th className="qpv-th" style={{ textAlign: "right" }}>Volume / Qty</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data.items.map((item, index) => (
+                <tr key={index} className="qpv-row">
+                  <td className="qpv-td" style={{ fontWeight: 500 }}>{item.name}</td>
+                  <td className="qpv-td" style={{ textAlign: "right", fontFamily: "IBM Plex Mono, monospace", fontWeight: 600 }}>{item.quantity}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div style={{ padding: "16px", background: "#f8fafc", borderRadius: "6px", fontSize: "13px", color: "#64748b", textAlign: "center" }}>
+            No individual items recorded for this quotation.
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 /* ===========================
-   STYLES
+   FORMAL DESIGN STYLES
 =========================== */
-
 const styles = {
   card: {
-    marginTop: "20px",
-    padding: "25px",
-    borderRadius: "12px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+    padding: "24px",
     backgroundColor: "#ffffff",
-    maxWidth: "800px",
   },
   header: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "20px",
-    borderBottom: "1px solid #eee",
-    paddingBottom: "10px",
+    alignItems: "flex-start",
+    marginBottom: "24px",
+    borderBottom: "1px solid #e2e8f0",
+    paddingBottom: "16px",
+  },
+  meta: {
+    fontFamily: "IBM Plex Mono, monospace",
+    fontSize: "10.5px",
+    fontWeight: 700,
+    color: "#2563eb",
+    letterSpacing: "1px",
+    display: "block",
+    marginBottom: "4px",
   },
   title: {
     margin: 0,
-    fontSize: "22px",
+    fontFamily: "Space Grotesk, sans-serif",
+    fontSize: "20px",
+    fontWeight: 700,
+    color: "#0f172a",
+  },
+  quotationNumber: {
+    fontFamily: "IBM Plex Mono, monospace",
+    fontSize: "12px",
+    color: "#64748b",
+    fontWeight: 600,
+    marginTop: "2px",
+    display: "inline-block",
   },
   amount: {
-    fontSize: "20px",
-    fontWeight: "bold",
-    color: "#28a745",
+    fontSize: "22px",
+    fontWeight: 800,
+    color: "#0f172a",
+    fontFamily: "Inter, sans-serif",
+    marginTop: "2px",
+    display: "block",
   },
   section: {
-    marginBottom: "20px",
+    marginBottom: "24px",
   },
-  row: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: "15px",
-    gap: "20px",
-    flexWrap: "wrap",
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "12px",
+  },
+  fieldBox: {
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
+    borderRadius: "8px",
+    padding: "10px 14px",
   },
   label: {
     margin: 0,
-    fontSize: "12px",
-    color: "#888",
+    fontSize: "10px",
+    fontWeight: "700",
+    color: "#64748b",
     textTransform: "uppercase",
+    letterSpacing: "0.5px",
   },
   value: {
-    margin: "5px 0 0 0",
-    fontSize: "15px",
-    fontWeight: "500",
+    margin: "4px 0 0 0",
+    fontSize: "13.5px",
+    fontWeight: "600",
+    color: "#1e293b",
   },
   itemsSection: {
-    marginTop: "20px",
+    marginTop: "24px",
   },
   itemsTitle: {
-    marginBottom: "10px",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-  },
-  th: {
-    textAlign: "left",
-    padding: "10px",
-    backgroundColor: "#f5f5f5",
     fontSize: "14px",
-  },
-  td: {
-    padding: "10px",
-    borderBottom: "1px solid #eee",
-    fontSize: "14px",
+    fontWeight: 700,
+    color: "#0f172a",
+    fontFamily: "Space Grotesk, sans-serif",
+    margin: "0 0 10px 0",
+    borderBottom: "2px solid #0f172a",
+    paddingBottom: "6px",
   },
 };

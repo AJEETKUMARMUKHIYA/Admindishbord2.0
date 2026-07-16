@@ -233,7 +233,7 @@ export function TicketDetails({ ticketId, userId, onBack }) {
                     size="small"
                     onClick={() =>
                       window.open(
-                        `https://localhost:7148/api/TicketAttachment/Download/${a.attachmentId}`,
+                        `${import.meta.env.VITE_API_BASE_URL || "https://packyatra.in/api"}/TicketAttachment/Download/${a.attachmentId}`,
                         "_blank"
                       )
                     }

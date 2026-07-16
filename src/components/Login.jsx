@@ -131,16 +131,16 @@ const Login = ({ onLogin }) => {
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
 
         #pyLoginWrapper {
-          --ink: #0E2A2E;
-          --ink-deep: #0A1F22;
-          --paper: #F7F3EA;
-          --paper-dim: #EDE6D6;
-          --amber: #E8A33D;
-          --amber-dark: #C97F1E;
-          --route: #4FBBA9;
-          --text-main: #16211F;
-          --text-mute: #6B6459;
-          --danger: #C4453B;
+          --ink: #0f172a;
+          --ink-deep: #090d16;
+          --paper: #f8fafc;
+          --paper-dim: #f1f5f9;
+          --amber: #06b6d4;
+          --amber-dark: #0891b2;
+          --route: #2563eb;
+          --text-main: #0f172a;
+          --text-mute: #64748b;
+          --danger: #ef4444;
 
           min-height: 100vh;
           width: 100%;
@@ -398,14 +398,14 @@ const Login = ({ onLogin }) => {
           display: flex;
           align-items: center;
           background: #FFFFFF;
-          border: 1.5px solid #E3DBC8;
+          border: 1.5px solid #cbd5e1;
           border-radius: 10px;
           transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
 
         #pyLoginWrapper .py-input-shell:focus-within {
           border-color: var(--route);
-          box-shadow: 0 0 0 3px rgba(79,187,169,0.14);
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
         }
 
         #pyLoginWrapper .py-input-icon {
@@ -427,7 +427,7 @@ const Login = ({ onLogin }) => {
         }
 
         #pyLoginWrapper .py-input::placeholder {
-          color: #B4AB98;
+          color: #94a3b8;
         }
 
         #pyLoginWrapper .py-input:disabled {
@@ -447,8 +447,8 @@ const Login = ({ onLogin }) => {
           width: 100%;
           border: none;
           border-radius: 10px;
-          background: var(--ink);
-          color: var(--paper);
+          background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+          color: #ffffff;
           font-family: 'Space Grotesk', sans-serif;
           font-weight: 600;
           font-size: 0.98rem;
@@ -458,12 +458,12 @@ const Login = ({ onLogin }) => {
           align-items: center;
           justify-content: center;
           gap: 0.55rem;
-          transition: background 0.15s ease, transform 0.1s ease;
+          transition: opacity 0.15s ease, transform 0.1s ease;
           margin-top: 0.4rem;
         }
 
         #pyLoginWrapper .py-submit:hover:not(:disabled) {
-          background: var(--ink-deep);
+          opacity: 0.95;
         }
 
         #pyLoginWrapper .py-submit:active:not(:disabled) {
@@ -471,8 +471,8 @@ const Login = ({ onLogin }) => {
         }
 
         #pyLoginWrapper .py-submit:disabled {
-          background: #C9C2AF;
-          color: #8A8371;
+          background: #cbd5e1;
+          color: #94a3b8;
           cursor: not-allowed;
         }
 

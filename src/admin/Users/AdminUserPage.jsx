@@ -14,7 +14,21 @@ import {
   Alert,
   CircularProgress,
   MenuItem,
+  Chip,
+  Avatar,
+  InputAdornment,
+  Paper,
+  Card,
+  CardContent,
+  Grid,
 } from "@mui/material";
+import SearchIcon from '@mui/icons-material/Search';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
+import DownloadIcon from '@mui/icons-material/Download';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 import axios from "axios";
 import * as XLSX from "xlsx";
 import Moment from "moment";
@@ -24,41 +38,95 @@ const Settings = {
   DISPLAY_DATE_FORMAT: "YYYY-MM-DD",
 };
 
-// Columns
+// Beautiful visual columns
 const columns = [
-  { field: "userId", headerName: "User ID", width: 100 },
-  { field: "password", headerName: "Password", width: 150 },
-  { field: "email", headerName: "Email", width: 200 },
-  { field: "mobile", headerName: "Mobile", width: 150 },
-  { field: "createdBy", headerName: "Created By", width: 130 },
+  { field: "userId", headerName: "ID", width: 80, sortable: true },
+  {
+    field: "fullName",
+    headerName: "User Name",
+    width: 200,
+    renderCell: (params) => {
+      const first = params.row.firstName || "";
+      const last = params.row.lastName || "";
+      const initials = (first.charAt(0) + last.charAt(0)).toUpperCase() || "?";
+      return (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, height: "100%" }}>
+          <Avatar 
+            sx={{ 
+              width: 34, 
+              height: 34, 
+              bgcolor: params.row.roleId === 1 ? "#2952E3" : "#C67C1F", 
+              fontSize: "0.85rem", 
+              fontWeight: "600",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
+            }}
+          >
+            {initials}
+          </Avatar>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: "#1E293B", lineHeight: 1.2 }}>
+              {`${first} ${last}`}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontSize: "0.7rem" }}>
+              ID: {params.row.userId}
+            </Typography>
+          </Box>
+        </Box>
+      );
+    }
+  },
+  { field: "email", headerName: "Email Address", width: 220 },
+  { field: "mobile", headerName: "Mobile", width: 140 },
+  {
+    field: "roleId",
+    headerName: "Role",
+    width: 140,
+    renderCell: (params) => {
+      const isAdmin = params.value === 1;
+      return (
+        <Chip
+          label={isAdmin ? "Admin" : "Supervisor"}
+          size="small"
+          sx={{
+            fontWeight: 700,
+            fontSize: "0.72rem",
+            borderRadius: "6px",
+            bgcolor: isAdmin ? "#EFF8FF" : "#F9F5FF",
+            color: isAdmin ? "#175CD3" : "#6941C6",
+            border: `1px solid ${isAdmin ? "#B2DDFF" : "#E9D7FE"}`
+          }}
+        />
+      );
+    }
+  },
+  {
+    field: "active",
+    headerName: "Status",
+    width: 120,
+    renderCell: (params) => (
+      <Chip
+        icon={params.value ? <CheckCircleIcon sx={{ fontSize: "14px !important", color: "#027A48 !important" }} /> : <CancelIcon sx={{ fontSize: "14px !important", color: "#B42318 !important" }} />}
+        label={params.value ? "Active" : "Inactive"}
+        size="small"
+        sx={{
+          fontWeight: 600,
+          fontSize: "0.72rem",
+          borderRadius: "6px",
+          bgcolor: params.value ? "#ECFDF3" : "#FEF3F2",
+          color: params.value ? "#027A48" : "#B42318",
+          border: `1px solid ${params.value ? "#ABEFC6" : "#FECDCA"}`
+        }}
+      />
+    )
+  },
+  { field: "password", headerName: "Password", width: 130 },
   {
     field: "createdDate",
-    headerName: "Created Date",
-    width: 150,
-    valueFormatter: (value) => {  return value ? Moment(value).format("YYYY-MM-DD"): ""
-    },
-     //valueFormatter: ({ value }) => Moment(value).format(Settings.DISPLAY_DATE_FORMAT),
+    headerName: "Created On",
+    width: 130,
+    valueFormatter: (value) => value ? Moment(value).format("YYYY-MM-DD") : ""
   },
-  { field: "updatedBy", headerName: "Updated By", width: 130 },
-  {
-    field: "updatedDate",
-    headerName: "Updated Date",
-    width: 150,
-     valueFormatter: (value) => {  return value ? Moment(value).format("YYYY-MM-DD"): ""
-    },
-  },
-  { field: "active", headerName: "Active", width: 100, type: "boolean" },
-  {
-    field: "lastActivityDate",
-    headerName: "Last Activity Date",
-    width: 160,
-    valueFormatter: (value) => {  return value ? Moment(value).format("YYYY-MM-DD"): ""
-    },
-  },
-  { field: "firstName", headerName: "First Name", width: 130 },
-  { field: "lastName", headerName: "Last Name", width: 130 },
-  { field: "defaultAccountId", headerName: "Default Account ID", width: 150 },
-  { field: "roleId", headerName: "Role", width: 130 },
+  { field: "defaultAccountId", headerName: "Account ID", width: 110 }
 ];
 
 // Component for Create/Edit User
@@ -238,7 +306,7 @@ const AdminUserPage = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("https://localhost:7148/api/AdminUser/Users");
+      const response = await axiosClient.get("/AdminUser/Users");
       setUsers(response.data);
     } catch (error) {
       setSnackbar({
@@ -380,82 +448,217 @@ const AdminUserPage = () => {
     XLSX.writeFile(wb, "AdminUsers.xlsx");
   };
 
+  const [searchQuery, setSearchQuery] = useState("");
+
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const filteredUsers = users.filter((user) => {
+    const query = searchQuery.toLowerCase();
+    const first = user.firstName?.toLowerCase() || "";
+    const last = user.lastName?.toLowerCase() || "";
+    const email = user.email?.toLowerCase() || "";
+    const mobile = user.mobile || "";
+    const userId = String(user.userId || "");
+    return (
+      first.includes(query) ||
+      last.includes(query) ||
+      email.includes(query) ||
+      mobile.includes(query) ||
+      userId.includes(query)
+    );
+  });
+
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress />
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <CircularProgress size={45} sx={{ color: "#2952E3" }} />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-        <Typography variant="h5" fontWeight="bold">
-          Admin Users
-        </Typography>
+    <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: "#F8F9FC", minHeight: "100vh" }}>
+      {/* Upper header section */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 4 }}>
         <Box>
+          <Typography variant="h4" fontWeight="800" sx={{ color: "#0F172A", letterSpacing: "-0.5px" }}>
+            Admin Users
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Manage administrative members, supervisors, credentials, and default accounts.
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", gap: 1.5 }}>
           <Button
             variant="contained"
-            color="primary"
-            sx={{ mr: 1 }}
+            startIcon={<AddIcon />}
             onClick={handleCreateUser}
+            sx={{
+              bgcolor: "#2952E3",
+              fontWeight: 600,
+              borderRadius: "8px",
+              px: 3,
+              py: 1,
+              textTransform: "none",
+              boxShadow: "0 4px 10px rgba(41, 82, 227, 0.2)",
+              "&:hover": {
+                bgcolor: "#1E3BB3",
+                boxShadow: "0 6px 14px rgba(41, 82, 227, 0.3)",
+              }
+            }}
           >
             Create User
           </Button>
           <Button
-            variant="contained"
-            color="secondary"
+            variant="outlined"
+            startIcon={<DownloadIcon />}
             onClick={onExport}
+            sx={{
+              borderColor: "#E2E8F0",
+              color: "#334155",
+              fontWeight: 600,
+              borderRadius: "8px",
+              px: 3,
+              py: 1,
+              textTransform: "none",
+              bgcolor: "#FFFFFF",
+              "&:hover": {
+                bgcolor: "#F1F5F9",
+                borderColor: "#CBD5E1",
+              }
+            }}
           >
             Export to Excel
           </Button>
         </Box>
       </Box>
 
-      <div style={{ height: 600, width: "100%" }}>
-        <DataGrid
-          rows={users}
-          columns={[
-            ...columns,
-            {
-              field: "actions",
-              headerName: "Actions",
-              width: 200,
-              renderCell: (params) => (
-                <>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    size="small"
-                    onClick={() => handleEditUser(params.row)}
-                    sx={{ mr: 1 }}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    size="small"
-                    onClick={() => handleDeleteUser(params.row.userId)}
-                  >
-                    Delete
-                  </Button>
-                </>
+      {/* Grid container with modern SaaS shadows */}
+      <Paper 
+        elevation={0} 
+        sx={{ 
+          p: 3, 
+          borderRadius: "16px", 
+          border: "1px solid #E2E8F0",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.02)",
+          bgcolor: "#FFFFFF",
+          overflow: "hidden"
+        }}
+      >
+        {/* Search tool panel */}
+        <Box sx={{ mb: 3, maxWidth: 400 }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search by name, email, or mobile..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "#94A3B8" }} />
+                </InputAdornment>
               ),
-            },
-          ]}
-          pageSize={10}
-          rowsPerPageOptions={[10, 25, 50]}
-          onRowClick={handleRowClick}
-          getRowId={(row) => row.userId}
-          disableSelectionOnClick
-        />
-      </div>
+              sx: {
+                borderRadius: "8px",
+                bgcolor: "#F8FAFC",
+                "& fieldset": { borderColor: "#E2E8F0" },
+                "&:hover fieldset": { borderColor: "#CBD5E1" },
+                "&.Mui-focused fieldset": { borderColor: "#2952E3" },
+              }
+            }}
+          />
+        </Box>
+
+        <div style={{ height: 580, width: "100%" }}>
+          <DataGrid
+            rows={filteredUsers}
+            columns={[
+              ...columns,
+              {
+                field: "actions",
+                headerName: "Actions",
+                width: 180,
+                sortable: false,
+                renderCell: (params) => (
+                  <Box sx={{ display: "flex", gap: 1, alignItems: "center", height: "100%" }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<EditIcon sx={{ fontSize: "14px !important" }} />}
+                      onClick={() => handleEditUser(params.row)}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        borderColor: "#E2E8F0",
+                        color: "#475569",
+                        borderRadius: "6px",
+                        py: 0.5,
+                        "&:hover": {
+                          bgcolor: "#F1F5F9",
+                          borderColor: "#CBD5E1",
+                        }
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="error"
+                      startIcon={<DeleteIcon sx={{ fontSize: "14px !important" }} />}
+                      onClick={() => handleDeleteUser(params.row.userId)}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        borderRadius: "6px",
+                        py: 0.5,
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </Box>
+                ),
+              },
+            ]}
+            pageSize={10}
+            rowsPerPageOptions={[10, 25, 50]}
+            onRowClick={handleRowClick}
+            getRowId={(row) => row.userId}
+            disableSelectionOnClick
+            sx={{
+              border: "none",
+              fontFamily: "'Inter', sans-serif",
+              "& .MuiDataGrid-columnHeaders": {
+                bgcolor: "#F8FAFC",
+                color: "#475569",
+                fontWeight: 600,
+                borderBottom: "1px solid #E2E8F0",
+                "& .MuiDataGrid-columnHeaderTitle": {
+                  fontWeight: 600,
+                }
+              },
+              "& .MuiDataGrid-cell": {
+                borderBottom: "1px solid #F1F5F9",
+                color: "#334155",
+                display: "flex",
+                alignItems: "center",
+              },
+              "& .MuiDataGrid-row:hover": {
+                bgcolor: "#F8FAFC",
+                cursor: "pointer",
+              },
+              "& .MuiTablePagination-root": {
+                color: "#64748B",
+              }
+            }}
+          />
+        </div>
+      </Paper>
 
       {/* View User Dialog */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
