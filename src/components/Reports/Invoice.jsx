@@ -367,7 +367,7 @@ export default function Invoice() {
                   className="iv-input"
                   value={invoiceNumber}
                   onChange={(e) => setInvoiceNumber(e.target.value)}
-                  placeholder="e.g. QTN-10234"
+                  placeholder="e.g. GCN-0001"
                 />
               </div>
 

@@ -623,6 +623,7 @@ export default function Quotation() {
               <thead>
                 <tr>
                   <th className="qp-th">Quotation Number</th>
+                  <th className="qp-th">GC Number</th>
                   <th className="qp-th">Booking ID</th>
                   <th className="qp-th">Amount</th>
                   <th className="qp-th">Date</th>
@@ -637,6 +638,9 @@ export default function Quotation() {
                       {item.quotationNumber}
                     </td>
                     <td className="qp-td" style={{ fontFamily: "IBM Plex Mono, monospace", fontWeight: 500 }}>
+                      {item.invoiceNumber || "-" }
+                    </td>
+                     <td className="qp-td" style={{ fontFamily: "IBM Plex Mono, monospace", fontWeight: 500 }}>
                       {item.bookingID}
                     </td>
                     <td className="qp-td" style={{ fontWeight: 600 }}>

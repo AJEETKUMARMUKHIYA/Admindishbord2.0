@@ -3,345 +3,441 @@ import autoTable from "jspdf-autotable";
 import signature from "../assets/signature.png";
 
 export const generateBookingConfirmationPDF = async (bookingData) => {
-  const {
-    bookingId,
-    price,
-    customerName,
-    customerEmail,
-    customerPhone,
-    shiftingDate,
-    selectedTimeSlot,
-    timeSlots = [],
-    selectedItems = [],
-    fromAddress,
-    toAddress,
-    totalCFT,
-  } = bookingData;
-
   const doc = new jsPDF("p", "mm", "a4");
   const PAGE_HEIGHT = doc.internal.pageSize.height;
-  const margin = 18;
-  const FOOTER_HEIGHT = 50;
-  let y = margin;
+  const PAGE_WIDTH = doc.internal.pageSize.width;
+  const margin = 15;
+  const CONTENT_WIDTH = 180;
 
- 
-const SAFE_BOTTOM = PAGE_HEIGHT - FOOTER_HEIGHT - 10; // 🔑 footer buffer
+  // Helper: Convert image to base64
+  const loadImageAsBase64 = (url) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = url;
 
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
 
-const TOP_MARGIN = 55;
-const BOTTOM_MARGIN = 30;
-const CONTENT_WIDTH = 175;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
 
-  const addTextWithPageBreak = (textArray, y) => {
-  const h = doc.getTextDimensions(textArray, { maxWidth: CONTENT_WIDTH }).h;
+        resolve(canvas.toDataURL("image/png"));
+      };
 
-  if (y + h > SAFE_BOTTOM) {
-    doc.addPage();
-    y = TOP_MARGIN;
-  }
+      img.onerror = () => {
+        reject(new Error("Image load failed"));
+      };
+    });
+  };
 
-  doc.text(textArray, margin, y, { maxWidth: CONTENT_WIDTH });
-  return y + h + 8;
-};
+  // Header Draw Utility
+  const drawHeader = (pageNum, totalPages) => {
+    // Top colored decorative bar
+    doc.setFillColor(30, 41, 59); // Slate-800
+    doc.rect(margin, 10, 130, 1.5, "F");
+    doc.setFillColor(14, 165, 233); // Sky-500
+    doc.rect(margin + 130, 10, 50, 1.5, "F");
 
-const loadImageAsBase64 = (url) => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.src = url;
+    // Geometric Motion Logo Block
+    doc.setFillColor(14, 165, 233); // Sky-500
+    doc.rect(margin, 16, 6, 6, "F");
+    doc.setFillColor(30, 41, 59); // Slate-800
+    doc.rect(margin + 1.5, 17.5, 3, 3, "F");
 
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
+    // Company Name
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    doc.setTextColor(30, 41, 59); // Slate-800
+    doc.text("PACKYATRA", margin + 9, 21.5);
 
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(100, 116, 139); // Slate-500
+    doc.text("RELOCATION PRIVATE LIMITED", margin + 9, 26);
 
-      resolve(canvas.toDataURL("image/png"));
-    };
+    // Right-aligned Corporate Contact Info
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(14, 165, 233); // Sky-500
+    doc.text("www.packyatra.com", PAGE_WIDTH - margin, 18.5, { align: "right" });
 
-    img.onerror = () => {
-      reject(new Error("Image load failed"));
-    };
-  });
-};
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(71, 85, 105); // Slate-600
+    doc.text("Ph: +91 9071 535 535", PAGE_WIDTH - margin, 23, { align: "right" });
+    doc.text("Email: info@packyatra.com", PAGE_WIDTH - margin, 27.5, { align: "right" });
 
-  /*=================================
-   header part 
-  =================================*/
-  // ===== HEADER BACKGROUND =====
-doc.setFillColor(0, 242, 254); 
-doc.rect(15, 15, 180, 28, "F");
+    // Elegant separator line
+    doc.setDrawColor(226, 232, 240); // Slate-200
+    doc.setLineWidth(0.4);
+    doc.line(margin, 31, PAGE_WIDTH - margin, 31);
+  };
 
-// ===== LEFT SIDE (COMPANY NAME) =====
-doc.setTextColor(0, 0, 0);
-doc.setFontSize(16);
-doc.setFont("helvetica", "bold");
-doc.text("PACKYATRA", 25, 30);
+  // Footer Draw Utility
+  const drawFooter = (pageNum, totalPages) => {
+    const footerY = PAGE_HEIGHT - 18;
 
-doc.setFontSize(10);
-doc.text("RELOCATION PRIVATE LIMITED", 25, 37);
+    // Light divider line
+    doc.setDrawColor(241, 245, 249); // Slate-100
+    doc.setLineWidth(0.4);
+    doc.line(margin, footerY - 2, PAGE_WIDTH - margin, footerY - 2);
 
-// ===== RIGHT SIDE (CONTACT INFO) =====
-doc.setFontSize(9);
-doc.setFont("helvetica", "normal");
+    // Footer background panel
+    doc.setFillColor(248, 250, 252); // Slate-50
+    doc.rect(margin, footerY - 1, CONTENT_WIDTH, 14, "F");
 
-doc.text("www.packyatra.com", 175, 26, { align: "right" });
-doc.text("Ph No: 9071 535 535", 175, 32, { align: "right" });
-doc.text("info@packyatra.com", 175, 38, { align: "right" });
+    // Corporate info
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(51, 65, 85); // Slate-700
+    doc.text("© PackYatra Relocation Private Limited", margin + 4, footerY + 4);
 
-  /* =======================
-     TITLE
-  ======================= */
-   y += 35;
-  doc.setFontSize(18);
-  doc.text("Quotation / Booking Confirmation", 100, y, { align: "center" });
-  y += 5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(100, 116, 139); // Slate-500
+    doc.text("Regd. Office: 122, 4th Main, West of Chord Road, Manjunath Nagar, Bangalore - 560010, Karnataka, India", margin + 4, footerY + 8.5);
 
-  /* =======================
-     CUSTOMER INFORMATION
-  ======================= */
-  doc.setFontSize(12);
+    // Page numbering
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(71, 85, 105); // Slate-600
+    doc.text(`Page ${pageNum} of ${totalPages}`, PAGE_WIDTH - margin - 4, footerY + 6, { align: "right" });
+  };
+
+  // Helper: Renders styled lists of terms with auto-pagination
+  const addTermsBlock = (title, itemsList, currentY) => {
+    let internalY = currentY;
+    
+    // Safety padding before new block
+    if (internalY + 22 > PAGE_HEIGHT - 25) {
+      doc.addPage();
+      internalY = 42;
+    }
+
+    // Section title
+    doc.setFillColor(14, 165, 233); // Sky-500
+    doc.rect(margin, internalY, 2.5, 4.5, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.setTextColor(30, 41, 59); // Slate-800
+    doc.text(title, margin + 4, internalY + 3.5);
+    internalY += 8;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(71, 85, 105); // Slate-600
+
+    itemsList.forEach((termText, index) => {
+      let fullText = termText.trim();
+      // If it doesn't already start with a bullet (•, -, *) or a manual numbering pattern (like "1.", "1)"), prepend index
+      if (!fullText.startsWith("•") && !fullText.startsWith("-") && !fullText.startsWith("*") && !/^\d+[\.\)]/.test(fullText)) {
+        const bulletPrefix = `${index + 1}. `;
+        fullText = bulletPrefix + fullText;
+      }
+      const wrappedText = doc.splitTextToSize(fullText, CONTENT_WIDTH - 4);
+      const textHeight = doc.getTextDimensions(wrappedText, { fontSize: 8, lineHeightFactor: 1.3 }).h;
+
+      if (internalY + textHeight > PAGE_HEIGHT - 25) {
+        doc.addPage();
+        internalY = 42;
+      }
+
+      doc.text(wrappedText, margin + 2, internalY, { maxWidth: CONTENT_WIDTH - 4, lineHeightFactor: 1.3 });
+      internalY += textHeight + 3;
+    });
+
+    return internalY + 4;
+  };
+
+  /* =======================================================
+     PAGE 1: BRAND SUMMARY & COMMERCIALS
+     ======================================================= */
+  let y = 42;
+
+  // 1. Sleek Quotation Title Block
+  doc.setFillColor(14, 165, 233); // Sky-500
+  doc.rect(margin, y, 3, 9, "F");
+
   doc.setFont("helvetica", "bold");
-  doc.text("Customer Information", margin, y);
-  doc.setFont("helvetica", "normal");
-  y += 5;
-const pickupTimeMap = {
-  1: "9:30AM",
-  2: "12:30PM",
-  3: "4:00PM"
-};
-autoTable(doc, {
-  startY: y,
+  doc.setFontSize(13);
+  doc.setTextColor(15, 23, 42); // Slate-900
+  doc.text("OFFICIAL RELOCATION QUOTATION", margin + 5, y + 6.5);
+  y += 14;
 
-    body: [
-    ["Quotation No", bookingData.quotationNumber  || "-", "Pickup Date", bookingData.pickupDate || "-"],
-    ["Name", bookingData.customerName || "-", "Pickup Time", bookingData.slotTime || "-"],
-    ["Mobile No", bookingData.phone || "-", "Delivery ETA", "-"],
-    ["Moving Type", "Household", "Total Volume(CFT)", bookingData.totalVolume||"-"],
-  ],
-  theme: "grid",
- 
-  styles: {
-    fontSize: 10,
-    fillColor: false,            // no background
-    textColor: 0,
-    lineColor: [160, 160, 160],  // light grey borders
-    lineWidth: 0.6,
-    minCellHeight: 10,           // 🔑 exact row height
-    valign: "middle",
-  },
-
-  columnStyles: {
-    0: {
-      cellWidth: 40,
-      fontStyle: "bold",
-    },
-    1: {
-      cellWidth: 55,
-    },
-    2: {
-      cellWidth: 40,
-      fontStyle: "bold",
-    },
-    3: {
-      cellWidth: 43,
-    },
-  },
-});
-y = doc.lastAutoTable.finalY + 5;
-
-
-  /* =======================
-     INTRO TEXT
-  ======================= */
-  doc.setFontSize(11);
-
-  const intro = `Dear Sir / Madam,
-  
-We thank you for your valuable enquiry for transportation of used household
-goods from ${bookingData.fromAddress || "______"} to ${bookingData. toAddress || "______"}.
-We are pleased to quote our rates for the same as under:`;
-  doc.text(intro.split("\n"), margin, y);
-  y += 30;
-
-  /* =======================
-     COST BREAKUP
-  ======================= */
-  doc.setFont("helvetica", "bold");
-  doc.text("Cost Breakup (INR)", margin, y);
-  doc.setFont("helvetica", "normal");
-  y += 4;//10
+  // 2. Customer Information Grid (Custom plain table with Slate divider lines)
+  const pickupDateStr = bookingData.pickupDate 
+    ? new Date(bookingData.pickupDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) 
+    : "-";
 
   autoTable(doc, {
     startY: y,
-    head: [["Description", "Amount"]],
+    margin: { left: margin, right: margin, top: 40, bottom: 25 },
     body: [
-      ["Freight Charges","Include"],
-      ["Packing Labour Charges", "Include"],
-      ["Loading / Unloading Charges",  "Include"],
-      ["Car Transportation Charges",  bookingData.totalAmount?.car || "-"],
-      ["GRAND TOTAL", bookingData.totalAmount || "-"],
+      ["Quotation No:", bookingData.quotationNumber || "-", "Pickup Date:", pickupDateStr],
+      ["Customer Name:", bookingData.customerName || "-", "Preferred Slot:", bookingData.slotTime || "-"],
+      ["Contact Phone:", bookingData.phone || "-", "Volume Estimate:", bookingData.totalVolume ? `${bookingData.totalVolume} CFT` : "-"],
+      [
+        "Moving Route:",
+        { content: `${bookingData.fromAddress || "-"}  to  ${bookingData.toAddress || "-"}`, colSpan: 3 }
+      ]
+    ],
+    theme: "plain",
+    styles: {
+      font: "helvetica",
+      fontSize: 9,
+      textColor: [30, 41, 59], // Slate-800
+      cellPadding: { top: 3.5, bottom: 3.5, left: 4, right: 4 },
+      lineColor: [226, 232, 240], // Slate-200
+      lineWidth: 0.4,
+    },
+    columnStyles: {
+      0: { fontStyle: "bold", textColor: [100, 116, 139], cellWidth: 32 },
+      1: { cellWidth: 58 },
+      2: { fontStyle: "bold", textColor: [100, 116, 139], cellWidth: 32 },
+      3: { cellWidth: 58 },
+    }
+  });
+
+  y = doc.lastAutoTable.finalY + 8;
+
+  // 3. Intro Note
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  doc.setTextColor(51, 65, 85); // Slate-700
+  
+  const introText = [
+    `Dear Customer,`,
+    ``,
+    `Thank you for choosing PackYatra as your trusted shifting partner. We are pleased to provide our competitive relocation quote. Our package includes specialized multi-layer packing, certified transport cargo, and dedicated loading/unloading handlers to ensure a stress-free shifting experience.`
+  ];
+  
+  doc.text(introText, margin, y, { maxWidth: CONTENT_WIDTH, lineHeightFactor: 1.35 });
+  const introHeight = doc.getTextDimensions(introText, { maxWidth: CONTENT_WIDTH, lineHeightFactor: 1.35 }).h;
+  y += introHeight + 10;
+
+  // 4. Section: Cost Breakup
+  doc.setFillColor(14, 165, 233); // Sky-500
+  doc.rect(margin, y, 3, 6, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.setTextColor(30, 41, 59); // Slate-800
+  doc.text("Commercial Cost Summary (INR)", margin + 5, y + 4.5);
+  y += 9;
+
+  // Render Premium Cost Breakup Table
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin, top: 40, bottom: 25 },
+    head: [["Service Description Details", "Billing Rate Status"]],
+    body: [
+      ["Professional Safe Transit & Logistics Freight Charges", "Included in Package"],
+      ["Industrial Grade Multi-Layer Packing Materials & Labor", "Included in Package"],
+      ["Safe Stacking, Systematic Loading & Unloading Services", "Included in Package"],
+      ["Dedicated Vehicle Carrier / Allied Services (if applicable)", bookingData.totalAmount?.car ? `INR ${bookingData.totalAmount.car.toLocaleString()}` : "Included"],
+      ["ESTIMATED ALL-INCLUSIVE ESTIMATE", `INR ${(bookingData.totalAmount?.toLocaleString() || "-")} /-`]
     ],
     theme: "grid",
-    headStyles: { fillColor: [0, 242, 254] },
-    styles: { fontSize: 10, cellPadding: 3 },
+    headStyles: {
+      fillColor: [30, 41, 59], // Slate-800
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+      fontSize: 9,
+      cellPadding: 3.5,
+    },
+    styles: {
+      font: "helvetica",
+      fontSize: 8.5,
+      textColor: [71, 85, 105],
+      cellPadding: 3.5,
+      lineColor: [226, 232, 240],
+      lineWidth: 0.4,
+    },
+    columnStyles: {
+      0: { cellWidth: 125 },
+      1: { cellWidth: 55, fontStyle: "bold", halign: "right" }
+    },
+    didParseCell: (cellData) => {
+      // Style grand total row beautifully
+      if (cellData.row.index === 4) {
+        cellData.cell.styles.fillColor = [241, 245, 249]; // Slate-100
+        cellData.cell.styles.textColor = [15, 23, 42]; // Slate-900
+        cellData.cell.styles.fontStyle = "bold";
+        cellData.cell.styles.fontSize = 9;
+        if (cellData.column.index === 1) {
+          cellData.cell.styles.textColor = [14, 165, 233]; // Sky-500
+        }
+      }
+    }
   });
-  y = doc.lastAutoTable.finalY + 20;
 
-  /* =======================
-     SIGNATORY
-  ======================= */
+  y = doc.lastAutoTable.finalY + 12;
+
+  // 5. Signatory Block (Check if fits on Page 1, else wrap)
+  if (y + 35 > PAGE_HEIGHT - 25) {
+    doc.addPage();
+    y = 42;
+  }
+
+  // Draw solid separating line
+  doc.setDrawColor(241, 245, 249); // Slate-100
+  doc.setLineWidth(0.4);
+  doc.line(margin, y, PAGE_WIDTH - margin, y);
+  y += 6;
+
+  // Left side: Signature
   doc.setFont("helvetica", "bold");
-  doc.text(
-    ["Authorized Signatory,"],
+  doc.setFontSize(9);
+  doc.setTextColor(30, 41, 59); // Slate-800
+  doc.text("Authorized Signatory,", margin, y);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139); // Slate-500
+  doc.text("PackYatra Relocation Private Ltd.", margin, y + 4.5);
+
+  let signatureBase64 = null;
+  try {
+    signatureBase64 = await loadImageAsBase64(signature);
+  } catch (err) {
+    console.warn("Signature image skipped or missing.");
+  }
+
+  if (signatureBase64) {
+    doc.addImage(signatureBase64, "PNG", margin + 1, y + 6, 25, 11);
+  } else {
+    doc.setDrawColor(203, 213, 225);
+    doc.line(margin, y + 14, margin + 35, y + 14);
+  }
+
+  // Right side: Corporate info
+  const rightX = PAGE_WIDTH - margin - 80;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(30, 41, 59); // Slate-800
+  doc.text("Corporate Credentials", rightX, y);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(71, 85, 105); // Slate-600
+  doc.text("CIN:  U68100KA2025PTC210677", rightX, y + 5);
+  doc.text("PAN:  AAXCP1234Q", rightX, y + 9);
+  doc.text("GST:  29AAQCP3437K1ZR", rightX, y + 13);
+
+
+  /* =======================================================
+     PAGE 2: INVENTORY & LEGAL POLICIES
+     ======================================================= */
+  doc.addPage();
+  y = 42;
+
+  // 6. Section: Itemized Shifting Inventory Manifest (Beautiful 2-Column Dense Grid)
+  doc.setFillColor(14, 165, 233); // Sky-500
+  doc.rect(margin, y, 3, 6, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.setTextColor(30, 41, 59); // Slate-800
+  doc.text("Itemized Shifting Inventory Manifest", margin + 5, y + 4.5);
+  y += 9;
+
+  const rawItems = bookingData.items || bookingData.selectedItems || [];
+  const sideBySideRows = [];
+  for (let i = 0; i < rawItems.length; i += 2) {
+    const leftItem = rawItems[i];
+    const rightItem = rawItems[i + 1] || { name: "", qty: "", quantity: "" };
     
-    margin,
-    y
-  );
-// switch back to normal if needed
-doc.setFont("helvetica", "normal");
+    sideBySideRows.push([
+      leftItem.name || "-",
+      leftItem.qty || leftItem.quantity || "1",
+      rightItem.name || (rightItem.name === "" ? "" : "-"),
+      rightItem.qty || rightItem.quantity || (rightItem.name === "" ? "" : "1")
+    ]);
+  }
 
-  y += 2;
- let signatureBase64 = null;
-
-try {
-  signatureBase64 = await loadImageAsBase64(signature);
-
-} catch (err) {
-  console.warn("Signature image not found, skipping signature"+signatureBase64);
-}
-
-if (signatureBase64) {
-  doc.addImage(signatureBase64, "PNG", margin+5, y, 25, 25);
-}
-y+=30;
-  /* =======================
-     COMPANY INFO
-  ======================= */
-  doc.setFont("helvetica", "bold");
-  const companyInfo = `PACKYATRA RELOCATION PRIVATE LIMITED
-  CIN: U68100KA2025PTC210677
-  PAN: AAXCP1234Q
-  GST:29AAQCP3437K1ZR`;
-  doc.text(companyInfo.split("\n"), margin, y);
-  // switch back to normal if needed
-  doc.setFont("helvetica", "normal");
-  y += 90;
-
-  /* =======================
-     ITEMS TABLE
-  ======================= */
-  doc.setFont("helvetica", "bold");
-  doc.text("Items (Name & Qty)", margin, y);
-  doc.setFont("helvetica", "normal");
-
-  y += 10;
+  if (sideBySideRows.length === 0) {
+    sideBySideRows.push(["No individual items logged", "-", "", ""]);
+  }
 
   autoTable(doc, {
     startY: y,
-    head: [["Item Name", "Quantity"]],
-    headStyles: { fillColor: [0, 242, 254] },
-    body:
-      bookingData.items && bookingData.items.length > 0
-        ? bookingData.items.map((item) => [
-            item.name || "-",
-            item.qty || 1,
-          ])
-        : [["-", "-"]],
+    margin: { left: margin, right: margin, top: 40, bottom: 25 },
+    head: [["Item Description", "Qty", "Item Description", "Qty"]],
+    body: sideBySideRows,
     theme: "grid",
-    styles: { fontSize: 10, cellPadding: 3 },
+    headStyles: {
+      fillColor: [30, 41, 59], // Slate-800
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+      fontSize: 8.5,
+      cellPadding: 3,
+    },
+    styles: {
+      font: "helvetica",
+      fontSize: 8,
+      textColor: [71, 85, 105],
+      cellPadding: 2.8,
+      lineColor: [241, 245, 249],
+      lineWidth: 0.4,
+    },
+    columnStyles: {
+      0: { cellWidth: 70 },
+      1: { cellWidth: 20, halign: "center", fontStyle: "bold" },
+      2: { cellWidth: 70 },
+      3: { cellWidth: 20, halign: "center", fontStyle: "bold" }
+    }
   });
-  y = doc.lastAutoTable.finalY + 20;
 
-  /* =======================
-     PAYMENT TERMS
-  ======================= */
-  doc.setFont("helvetica", "bold");
-  doc.text("Payment Terms and Condition:", margin, y);
-  doc.setFont("helvetica", "normal");
-  y += 10;
+  y = doc.lastAutoTable.finalY + 10;
 
-
-  doc.setFontSize(10);
+  // 7. Payment Terms Section
   const paymentTerms = [
     "1. Kindly note that to confirm your Packers & Movers booking and reserve your preferred slot, an advance payment of 10% of the total amount is required.",
     "2. After the initial 10% booking amount, the remaining 90% will be paid as 80% during loading and the final 10% before unloading.",
-    "3. We support all major payment methods available in India, such as UPI, Credit/Debit Cards and Net Banking",
-    "4. Kindly ensure that all payments are made only to Packyatra Relocation Private Limited. Payments made to any other individual or account will not be accepted.",
+    "3. We support all major payment methods available in India, such as UPI, Credit/Debit Cards and Net Banking.",
+    "4. Kindly ensure that all payments are made only to Packyatra Relocation Private Limited. Payments made to any other individual or account will not be accepted."
   ];
+  y = addTermsBlock("Payment Terms and Condition:", paymentTerms, y);
 
-  y = addTextWithPageBreak(paymentTerms, y);
-  /* =======================
-     PROHIBITED ITEMS
-  ======================= */
-  doc.setFont("helvetica", "bold");
-  doc.text("Prohibited Items for Transportation:", margin, y);
-  doc.setFont("helvetica", "normal");
-  y += 10;
+  // 8. Prohibited Items Section
+  const prohibitedItems = [
+    "For security reasons, the company does not accept cash, jewellery, valuables, or important documents for transportation. These items must be kept in the client’s personal custody.",
+    "We do not accept to move perishable goods, arms & ammunitions, hazardous material like crackers, explosives, chemicals, filled gas cylinder, battery acids, and inflammable oils; such as diesel, petrol, kerosene, gasoline, narcotics & counter brand items."
+  ];
+  y = addTermsBlock("Prohibited Items for Transportation:", prohibitedItems, y);
 
-  const prohibitedItems = ` For security reasons, the company does not accept cash, jewellery, valuables, or important documents for transportation. These  
-items must be kept in the client’s personal custody. We do not accept to move perishable goods, arms & ammunitions, hazardous  
-material like crackers, explosives, chemicals, filled gas cylinder, battery acids, and inflammable oils; such as diesel, petrol, kerosene,  
-gasoline, narcotics & counter brand items.`;
+  // 9. General Terms & Conditions
+  const generalTerms = [
+    "• If you book a direct FTL (Full Truck Load), the expected daily movement will be approximately 300 km. For share-based bookings, delivery timelines will be as per the defined TAT.",
+    "• Pickup and delivery days are excluded from the transit timeline.",
+    "• Delivery timelines may vary due to traffic conditions, weather, or regulatory approvals.",
+    "• Packyatra shall not be responsible for any pre-existing defects, damages, or functional issues identified before transportation.",
+    "• Electrical, plumbing, carpentry, and AC services are not included unless specifically mentioned in the quotation or invoice.",
+    "• Personal items such as goggles, mobile chargers, cartons, or belongings left inside the vehicle will be carried strictly at the owner’s sole risk. No claims shall be entertained by Packyatra Relocation Private Limited.",
+    "• Helmets or riding gear will be transported only if they are specifically mentioned and charged in the invoice.",
+    "• Clients are advised to opt for Packyatra Relocation Private Limited risk coverage or obtain insurance for additional protection of their goods.",
+    "• All consignments transported through our lorries are carried entirely at the owner’s risk. Customers are advised to arrange insurance coverage for their consignments.",
+    "• Charges for Mathadi (union labor and associated services) shall be borne by the client and are excluded from the quotation, wherever applicable (e.g., Mumbai, Pune, Kerala, etc.).",
+    "• Unloading, unpacking, and rearranging services are not available in Kerala.",
+    "• All packing materials remain the property of Packyatra and must be returned on the day of unloading. Retention of any boxes will incur a charge of Rs. 60 per carton.",
+    "• The quotation does not include dismantling (carpentry work) or installation/fitting of electrical or electronic appliances unless specified.",
+    "• Any permissions or fees required at the client’s location to facilitate shifting—such as society charges, parking fees, or entry permissions—shall be borne by the client.",
+    "• Rescheduling is permitted up to 24 hours prior to the scheduled move date at no additional cost, provided the support team is informed in advance.",
+    "• For cancellations, clients are requested to contact the Packyatra support team.",
+    "• If any third-party services are involved (e.g., AC dismantling) or if local transportation and labor are utilized, applicable charges for such services will be levied."
+  ];
+  y = addTermsBlock("Terms and Conditions:", generalTerms, y);
 
-  y = addTextWithPageBreak(prohibitedItems.split("\n"), y);
-  /* =======================
-     TERMS & CONDITIONS
-  ======================= */
-  doc.setFont("helvetica", "bold");
-  doc.text("Terms and Conditions:", margin, y);
-  doc.setFont("helvetica", "normal");
-  y += 10;
-
-  const terms = [
-  "• If you book a direct FTL (Full Truck Load), the expected daily movement will be approximately 300 km. For share-based bookings, delivery timelines will be as per the defined TAT.",
-  "• Pickup and delivery days are excluded from the transit timeline.",
-  "• Delivery timelines may vary due to traffic conditions, weather, or regulatory approvals.",
-  "• Packyatra shall not be responsible for any pre-existing defects, damages, or functional issues identified before transportation.",
-  "• Electrical, plumbing, carpentry, and AC services are not included unless specifically mentioned in the quotation or invoice.",
-  "• Personal items such as goggles, mobile chargers, cartons, or belongings left inside the vehicle will be carried strictly at the owner’s sole risk. No claims shall be entertained by Packyatra Relocation Private Limited.",
-  "• Helmets or riding gear will be transported only if they are specifically mentioned and charged in the invoice.",
-  "• Clients are advised to opt for Packyatra Relocation Private Limited risk coverage or obtain insurance for additional protection of their goods.",
-  "• All consignments transported through our lorries are carried entirely at the owner’s risk. Customers are advised to arrange insurance coverage for their consignments.",
-  "• Charges for Mathadi (union labor and associated services) shall be borne by the client and are excluded from the quotation, wherever applicable (e.g., Mumbai, Pune, Kerala, etc.).",
-  "• Unloading, unpacking, and rearranging services are not available in Kerala.",
-  "• All packing materials remain the property of Packyatra and must be returned on the day of unloading. Retention of any boxes will incur a charge of Rs. 60 per carton.",
-  "• The quotation does not include dismantling (carpentry work) or installation/fitting of electrical or electronic appliances unless specified.",
-  "• Any permissions or fees required at the client’s location to facilitate shifting—such as society charges, parking fees, or entry permissions—shall be borne by the client.",
-  "• Rescheduling is permitted up to 24 hours prior to the scheduled move date at no additional cost, provided the support team is informed in advance.",
-  "• For cancellations, clients are requested to contact the Packyatra support team.",
-  "• If any third-party services are involved (e.g., AC dismantling) or if local transportation and labor are utilized, applicable charges for such services will be levied."
-];
-
-  y = addTextWithPageBreak(terms, y);
-  
-   /* ================= FOOTER ================= */
-    const drawFooter = () => {
-    const footerY = PAGE_HEIGHT - FOOTER_HEIGHT;
-
-    doc.setFillColor(245, 245, 245);
-    doc.rect(0, footerY, 210, FOOTER_HEIGHT, "F");
-
-    doc.setTextColor(40, 40, 40);
-    doc.setFont("helvetica", "bold");
-    doc.text("© PackYatra Relocation Private Limited", 105, footerY + 10, {
-      align: "center"
-    });
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.text(
-      "122, 4th Main, 1st stage,1st phase,west of chord road,manjunath nagar,Bangalore - 560010, India",
-      105,
-      footerY + 16,
-      { align: "center" }
-    );
-  };
-
-  doc.setPage(doc.getNumberOfPages());
-  drawFooter();
+  /* =======================================================
+     POST-PROCESSING: DRAW GLOBAL EVERY-PAGE HEADERS/FOOTERS
+     ======================================================= */
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    drawHeader(i, totalPages);
+    drawFooter(i, totalPages);
+  }
 
   doc.save("PackyatraQuotation.pdf");
 };
