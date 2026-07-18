@@ -357,8 +357,8 @@ const Dashboard = ({ userData }) => {
 
   const canView = (card) => statsAccess[roleId]?.includes(card);
 
-  const filteredBookings = useMemo(() => {
-    return recentBookings.filter(booking => {
+const filteredBookings = useMemo(() => {
+    return recentBookings.filter(booking => {    
       if (bookingFilter.status !== 'all' && booking.bookingStatus !== bookingFilter.status) return false;
       if (bookingFilter.paymentStatus !== 'all' && booking.paymentStatus !== bookingFilter.paymentStatus) return false;
 
@@ -368,7 +368,7 @@ const Dashboard = ({ userData }) => {
         const diffDays = Math.floor((now - ticketDate) / (1000 * 60 * 60 * 24));
 
         switch (bookingFilter.dateRange) {
-          case 'today': return diffDays === 0;
+           case 'today': return diffDays === 0;
           case 'week': return diffDays <= 7;
           case 'month': return diffDays <= 30;
           default: return true;
@@ -506,9 +506,10 @@ const Dashboard = ({ userData }) => {
         <table className="manifest-table">
           <thead>
             <tr>
-              <th>Customer</th>
-              <th>Ticket Ref</th>
-              <th>Booking ID</th>
+              <th>Quotation Number</th>
+              <th>Customer Details</th>
+              {/* <th>Ticket Ref</th> */}
+              {/* <th>Booking ID</th> */}
               <th>Logistical Route</th>
               <th>Pickup Date</th>
               <th>Amount Details</th>
@@ -520,6 +521,7 @@ const Dashboard = ({ userData }) => {
           <tbody>
             {paginatedBookings.map((booking, index) => (
               <tr key={booking.bookingID ?? index}>
+                <td><span className="mono-cell">{booking.quotationNumber}</span></td>
                 <td>
                   <div className="customer-cell">
                     <div className="customer-cell__avatar">{booking.userName?.charAt(0) || 'U'}</div>
@@ -529,8 +531,8 @@ const Dashboard = ({ userData }) => {
                     </div>
                   </div>
                 </td>
-                <td><span className="mono-tag">{booking.ticketNo}</span></td>
-                <td><span className="mono-tag">#{booking.bookingID}</span></td>
+                {/* <td><span className="mono-tag">{booking.ticketNo}</span></td> */}
+                {/* <td><span className="mono-tag">#{booking.bookingID}</span></td> */}
                 <td><RouteCell from={booking.fromLocation} to={booking.toLocation} /></td>
                 <td className="mono-cell">{booking.formattedPickupDate}</td>
                 <td>
